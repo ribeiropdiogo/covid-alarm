@@ -1,2 +1,4 @@
 # MacOS Trash
 *.DS_Store
+
+*.idea/
