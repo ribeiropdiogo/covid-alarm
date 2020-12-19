@@ -1,2 +1,8 @@
 # MacOS Trash
 *.DS_Store
+
+.idea/
+
+target/
+
+*.iml
