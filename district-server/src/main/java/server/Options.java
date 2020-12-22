@@ -11,4 +11,7 @@ public class Options {
 
     @Parameter(names = {"-s","--size"}, description = "size of the NxN grid")
     public int grid = 10;
+
+    @Parameter(names = {"-p","--port"}, description = "port number of the district")
+    public int number;
 }

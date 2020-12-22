@@ -17,7 +17,14 @@ public class Server {
                 return;
             }
 
-            // A partir daqui faz cenas
+            System.out.println("> Distric Server '" + options.name + "' started with number " + options.number);
+
+            // Criar as Threads para notificações públicas e privadas
+            PublicThread publict = new PublicThread(options.name,options.number);
+            PrivateThread privatet = new PrivateThread(options.name,options.number);
+            publict.start();
+            privatet.start();
+
 
         } catch(Exception e) {
             parser.usage();
