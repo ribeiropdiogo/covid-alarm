@@ -25,6 +25,9 @@ public class Server {
             publict.start();
             privatet.start();
 
+            ExecutionThread et = new ExecutionThread(publict,privatet,options.name,options.number,options.grid);
+            et.start();
+
 
         } catch(Exception e) {
             parser.usage();
