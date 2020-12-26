@@ -10,6 +10,14 @@
 
     <dependencies>
         <dependency>
+<<<<<<< HEAD
+            <groupId>com.beust</groupId>
+            <artifactId>jcommander</artifactId>
+            <version>1.78</version>
+        </dependency>
+        <dependency>
+=======
+>>>>>>> b4e9786c6db679dd0e8a8b4cff1769a2ebb7a59f
             <groupId>org.zeromq</groupId>
             <artifactId>jeromq</artifactId>
             <version>0.5.2</version>
