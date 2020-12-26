@@ -15,8 +15,20 @@ public class UserInfo {
         this.contacts = new ArrayList<>();
     }
 
+    public String getLocation(){
+        return this.locationX+"-"+this.locationY;
+    }
+
     public void updateLocation(int x, int y){
         this.locationX = x;
         this.locationY = y;
+    }
+
+    public void addContact(String user){
+        this.contacts.add(user);
+    }
+
+    public List<String> getContacts(){
+        return this.contacts;
     }
 }
