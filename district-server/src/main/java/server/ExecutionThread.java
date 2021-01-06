@@ -1,31 +1,32 @@
 package server;
 
+import common.District;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+import zmq.io.net.Address;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class ExecutionThread extends Thread {
-
     private PublicThread publict;
     private PrivateThread privatet;
-    private String district, districtn, response;
-    private int gridSize, nusers, ninfected;
+    private PushDirectoryThread directoryThread;
+    private String district, districtn, response, directoryAddress;
+    private int gridSize, nusers, ninfected, meetInfected;
     private HashMap<String, List<String>> usersByLocation;
     private HashMap<String, UserInfo> users;
 
-    public ExecutionThread(PublicThread pubt, PrivateThread privt,String name, int n, int s){
+    public ExecutionThread(PublicThread pubt, PrivateThread privt,String name, int n, int s, String directoryAddress){
         this.publict = pubt;
         this.privatet = privt;
         this.district = name;
         this.districtn = String.format("%02d", n);
         this.gridSize = s;
+        this.directoryAddress = directoryAddress;
         this.nusers = 0;
         this .ninfected = 0;
+        this.meetInfected = 0;
         this.usersByLocation = new HashMap<String, List<String>>();
 
         for (int i = 0; i <= gridSize; i++)
@@ -44,8 +45,9 @@ public class ExecutionThread extends Thread {
         // Add User to Struct
         if (users.containsKey(ui))
             return "exists";
-        else
-            users.put(id,ui);
+        else {
+            users.put(id, ui);
+        }
 
         // Add this users to the map
         this.usersByLocation.get(X+"-"+Y).add(id);
@@ -109,6 +111,32 @@ public class ExecutionThread extends Thread {
         }
     }
 
+    //post of the district
+    public void upDateDistrict(String address) {
+
+        ClientHTTP clientHTTP = new ClientHTTP(address);
+        HashMap usersPerLocation = new HashMap();
+
+        for (Map.Entry<String, List<String>> e : this.usersByLocation.entrySet()) {
+            int nUsers = e.getValue().size();
+            usersPerLocation.put(e.getKey(), nUsers);
+        }
+
+        //Falta calcular as meetPeople
+        District district = new District("Faro", 10000, 300, 100,usersPerLocation);
+        clientHTTP.post(district);
+    }
+
+    //put of the district
+    public void putDistrict(String address) {
+
+        ClientHTTP clientHTTP = new ClientHTTP(address);
+        HashMap usersPerLocation = new HashMap();
+
+        District district = new District("Faro", 5000, 500, 200, usersPerLocation);
+        clientHTTP.put(district);
+    }
+
     private String getUsersOn(int X, int Y){
         // Return uses in location list
         return String.valueOf(this.usersByLocation.get(X+"-"+Y).size());
@@ -123,8 +151,11 @@ public class ExecutionThread extends Thread {
             publict.sendMessage("There is a new infection in the district.");
 
             // Notify user that had contact
-            for (String s : this.users.get(id).getContacts())
-                privatet.sendMessage(s,"You have contacted with an infected user :(");
+            for (String s : this.users.get(id).getContacts()) {
+                privatet.sendMessage(s, "You have contacted with an infected user :(");
+                //update de number of people that have been in touch with an infected user.
+                meetInfected++;
+            }
 
             ninfected++;
             return "success";
@@ -136,10 +167,21 @@ public class ExecutionThread extends Thread {
              ZMQ.Socket socket = context.createSocket(SocketType.REP))
         {
             socket.bind("tcp://*:7"+this.districtn+"1");
+
+            /*
+            We assume that the district servers are always running and won't be restarted
+            Also, we assume that when the district is started the server's directory is already running.
+            If we restart this server will be an error because it will start to do put of a district that
+            already exists with different values.
+            */
+            this.putDistrict(directoryAddress);
+
             while (true) {
                 byte[] msg = socket.recv();
                 String str = new String(msg);
                 String[] parts = str.split("_");
+
+                directoryThread.run();
 
                 switch (parts[0]){
                     // nu -> new user

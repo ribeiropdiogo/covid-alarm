@@ -14,4 +14,9 @@ public class Options {
 
     @Parameter(names = {"-p","--port"}, description = "port number of the district")
     public int number;
+
+    @Parameter(names = {"-dIp","--directory"}, description = "ip and port number of the directory")
+    public String directoryAddress;
+
+
 }

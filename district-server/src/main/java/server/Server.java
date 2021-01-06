@@ -1,7 +1,7 @@
 package server;
 
 import com.beust.jcommander.JCommander;
-import org.zeromq.ZMQ;
+
 
 public class Server {
     private static Options options = new Options();
@@ -16,6 +16,10 @@ public class Server {
                 parser.usage();
                 return;
             }
+            //Caso o ip e porta do directorio não sejam passados como parametros
+            if (options.directoryAddress == null) {
+                options.directoryAddress = "127.0.0.1:8080";
+            }
 
             System.out.println("> Distric Server '" + options.name + "' started with number " + options.number);
 
@@ -25,9 +29,12 @@ public class Server {
             publict.start();
             privatet.start();
 
-            ExecutionThread et = new ExecutionThread(publict,privatet,options.name,options.number,options.grid);
-            et.start();
 
+            ExecutionThread et = new ExecutionThread(publict,privatet,options.name,options.number,options.grid, options.directoryAddress);
+            et.start();
+            //Cria a thread para fazer de tempos a tempos post da info do directorio
+            PushDirectoryThread pdt = new PushDirectoryThread(et, options.directoryAddress);
+            pdt.start();
 
         } catch(Exception e) {
             parser.usage();
