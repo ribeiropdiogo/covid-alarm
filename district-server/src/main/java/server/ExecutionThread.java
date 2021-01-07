@@ -1,32 +1,41 @@
 package server;
 
-import common.District;
+import org.apache.http.HttpEntity;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-import zmq.io.net.Address;
 
+import java.io.IOException;
 import java.util.*;
 
 public class ExecutionThread extends Thread {
     private PublicThread publict;
     private PrivateThread privatet;
-    private PushDirectoryThread directoryThread;
-    private String district, districtn, response, directoryAddress;
-    private int gridSize, nusers, ninfected, meetInfected;
+    private String district, districtn, response;
+    private int gridSize, nusers, ninfected, contacts;
     private HashMap<String, List<String>> usersByLocation;
     private HashMap<String, UserInfo> users;
 
-    public ExecutionThread(PublicThread pubt, PrivateThread privt,String name, int n, int s, String directoryAddress){
+    public ExecutionThread(PublicThread pubt, PrivateThread privt,String name, int n, int s){
         this.publict = pubt;
         this.privatet = privt;
         this.district = name;
         this.districtn = String.format("%02d", n);
         this.gridSize = s;
-        this.directoryAddress = directoryAddress;
         this.nusers = 0;
-        this .ninfected = 0;
-        this.meetInfected = 0;
+        this.ninfected = 0;
+        this.contacts = 0;
         this.usersByLocation = new HashMap<String, List<String>>();
 
         for (int i = 0; i <= gridSize; i++)
@@ -45,9 +54,8 @@ public class ExecutionThread extends Thread {
         // Add User to Struct
         if (users.containsKey(ui))
             return "exists";
-        else {
+        else
             users.put(id, ui);
-        }
 
         // Add this users to the map
         this.usersByLocation.get(X+"-"+Y).add(id);
@@ -112,29 +120,31 @@ public class ExecutionThread extends Thread {
     }
 
     //post of the district
-    public void upDateDistrict(String address) {
+    public void updateDistrict() {
+        // Fazer o put
+        try {
+            CloseableHttpClient httpclient = HttpClients.createDefault();
+            HttpPut httpPut = new HttpPut("http://localhost:8080/"+district+"/");
+            httpPut.setHeader("Accept", "application/json");
+            httpPut.setHeader("Content-type", "application/json");
 
-        ClientHTTP clientHTTP = new ClientHTTP(address);
-        HashMap usersPerLocation = new HashMap();
+            // Ir buscar as estatísticas
+            List<NameValuePair> params = new ArrayList<NameValuePair>();
+            params.add(new BasicNameValuePair("users", String.valueOf(nusers)));
+            params.add(new BasicNameValuePair("infected", String.valueOf(ninfected)));
 
-        for (Map.Entry<String, List<String>> e : this.usersByLocation.entrySet()) {
-            int nUsers = e.getValue().size();
-            usersPerLocation.put(e.getKey(), nUsers);
+            int avg_contacts = 0;
+            if (ninfected>0) avg_contacts = contacts/ninfected;
+
+            params.add(new BasicNameValuePair("avg_contacts", String.valueOf(avg_contacts)));
+            httpPut.setEntity(new UrlEncodedFormEntity(params));
+
+            CloseableHttpResponse response = httpclient.execute(httpPut);
+            System.out.println("> PUT response -> " + response.getStatusLine().getStatusCode());
+            httpclient.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        //Falta calcular as meetPeople
-        District district = new District("Faro", 10000, 300, 100,usersPerLocation);
-        clientHTTP.post(district);
-    }
-
-    //put of the district
-    public void putDistrict(String address) {
-
-        ClientHTTP clientHTTP = new ClientHTTP(address);
-        HashMap usersPerLocation = new HashMap();
-
-        District district = new District("Faro", 5000, 500, 200, usersPerLocation);
-        clientHTTP.put(district);
     }
 
     private String getUsersOn(int X, int Y){
@@ -152,9 +162,8 @@ public class ExecutionThread extends Thread {
 
             // Notify user that had contact
             for (String s : this.users.get(id).getContacts()) {
-                privatet.sendMessage(s, "You have contacted with an infected user :(");
-                //update de number of people that have been in touch with an infected user.
-                meetInfected++;
+                contacts++;
+                privatet.sendMessage(s,"You have contacted with an infected user :(");
             }
 
             ninfected++;
@@ -168,20 +177,10 @@ public class ExecutionThread extends Thread {
         {
             socket.bind("tcp://*:7"+this.districtn+"1");
 
-            /*
-            We assume that the district servers are always running and won't be restarted
-            Also, we assume that when the district is started the server's directory is already running.
-            If we restart this server will be an error because it will start to do put of a district that
-            already exists with different values.
-            */
-            this.putDistrict(directoryAddress);
-
             while (true) {
                 byte[] msg = socket.recv();
                 String str = new String(msg);
                 String[] parts = str.split("_");
-
-                directoryThread.run();
 
                 switch (parts[0]){
                     // nu -> new user

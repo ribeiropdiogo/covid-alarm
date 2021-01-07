@@ -16,10 +16,6 @@ public class Server {
                 parser.usage();
                 return;
             }
-            //Caso o ip e porta do directorio não sejam passados como parametros
-            if (options.directoryAddress == null) {
-                options.directoryAddress = "127.0.0.1:8080";
-            }
 
             System.out.println("> Distric Server '" + options.name + "' started with number " + options.number);
 
@@ -29,12 +25,18 @@ public class Server {
             publict.start();
             privatet.start();
 
-
-            ExecutionThread et = new ExecutionThread(publict,privatet,options.name,options.number,options.grid, options.directoryAddress);
+            ExecutionThread et = new ExecutionThread(publict,privatet,options.name,options.number,options.grid);
             et.start();
-            //Cria a thread para fazer de tempos a tempos post da info do directorio
-            PushDirectoryThread pdt = new PushDirectoryThread(et, options.directoryAddress);
-            pdt.start();
+
+            while(true) {
+                try {
+                    Thread.sleep(5000);
+                    System.out.println("> Sending information to the directory");
+                    et.updateDistrict();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
 
         } catch(Exception e) {
             parser.usage();
