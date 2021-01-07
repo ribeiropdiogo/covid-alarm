@@ -1,8 +1,13 @@
 # MacOS Trash
 *.DS_Store
 
+# Erlang Trash
+frontend-server/*.beam
+frontend-server/_build/
+frontend-server/rebar.lock
+
+# IntelliJ Trash
 .idea/
-
 target/
-
 *.iml
+*.class
