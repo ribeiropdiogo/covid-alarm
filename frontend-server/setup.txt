@@ -1,0 +1,2 @@
+sudo snap install erlang --classic
+rebar3 compile
