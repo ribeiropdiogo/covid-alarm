@@ -37,9 +37,9 @@ public class Server {
 
         while(true) {
             try {
-                Thread.sleep(Long.MAX_VALUE);
+                Thread.sleep(5000);
                 System.out.println("> Sending information to the directory");
-                execThread.updateDistrict();
+                execThread.putToDirectory();
             } catch (InterruptedException ignored) {
             }
         }

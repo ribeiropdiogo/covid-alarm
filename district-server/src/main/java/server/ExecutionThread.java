@@ -4,6 +4,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
@@ -22,6 +23,7 @@ public class ExecutionThread extends Thread {
     private final int gridSize;
     private int nUsers, nInfected, contacts;
     private final HashMap<String, Set<Integer>> usersByLocation;
+    private final HashMap<String, Integer> numberOfUsersByLocation;
     private final HashMap<Integer, UserInfo> users;
 
     
@@ -36,18 +38,54 @@ public class ExecutionThread extends Thread {
         this.nInfected = 0;
         this.contacts = 0;
         this.usersByLocation = new HashMap<>();
+        this.numberOfUsersByLocation = new HashMap<>();
 
         for (int i = 0; i <= gridSize; i++)
             for (int j = 0; j <= gridSize; j++) {
                 // Keys X-Y
                 this.usersByLocation.put(i+"-"+j, new HashSet<>());
+                this.numberOfUsersByLocation.put(i+"-"+j,0);
             }
 
         this.users = new HashMap<>();
     }
 
+    private LinkedHashMap<String, Integer> sortUserAmount(){
+        LinkedHashMap<String, Integer> sortedMap = new LinkedHashMap<>();
+
+        numberOfUsersByLocation.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .forEachOrdered(x -> sortedMap.put(x.getKey(), x.getValue()));
+
+        return sortedMap;
+    }
+
+    private String jsonAux(){
+        LinkedHashMap<String, Integer> map = sortUserAmount();
+        String s = "";
+
+        int i = 0;
+
+        s+= "   'top5': {\n";
+
+        for (Map.Entry<String, Integer> entry : map.entrySet()) {
+            if (i < 4){
+                s+= "      '"+entry.getKey()+"': "+entry.getValue()+",\n";
+                i++;
+            } else if (i == 4){
+                s+= "      '"+entry.getKey()+"': "+entry.getValue()+"\n";
+                i++;
+            }
+        }
+
+        s+= "   },\n";
+
+        return s;
+    }
+
     //post of the district
-    public void updateDistrict() {
+    public void putToDirectory() {
         // Fazer o put
         try {
             CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -55,23 +93,40 @@ public class ExecutionThread extends Thread {
             httpPut.setHeader("Accept", "application/json");
             httpPut.setHeader("Content-type", "application/json");
 
-            // Ir buscar as estatísticas
-            List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("users", String.valueOf(nUsers)));
-            params.add(new BasicNameValuePair("infected", String.valueOf(nInfected)));
-
             int avg_contacts = 0;
             if (nInfected > 0) avg_contacts = contacts/ nInfected;
 
-            params.add(new BasicNameValuePair("avg_contacts", String.valueOf(avg_contacts)));
-            httpPut.setEntity(new UrlEncodedFormEntity(params));
 
+
+            String json = "{\n" +
+                        "   'district': "+distName+",\n" +
+                        "   'users':"+nUsers+",\n" +
+                        "   'infected':"+nInfected+",\n" +
+                        jsonAux() +
+                        "   'avg_contacts':"+avg_contacts+"\n" +
+                    "}";
+
+            System.out.println(json);
+
+            httpPut.setEntity(new StringEntity(json));
             CloseableHttpResponse response = httpclient.execute(httpPut);
             System.out.println("> PUT response -> " + response.getStatusLine().getStatusCode());
             httpclient.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void incUserInLocation(String key){
+        int users = numberOfUsersByLocation.get(key);
+        users++;
+        numberOfUsersByLocation.put(key,users);
+    }
+
+    private void decUserInLocation(String key){
+        int users = numberOfUsersByLocation.get(key);
+        users--;
+        numberOfUsersByLocation.put(key,users);
     }
 
     private String addUser(int X, int Y) {
@@ -83,6 +138,8 @@ public class ExecutionThread extends Thread {
 
         // Add this user to the map
         usersByLocation.get(X+"-"+Y).add(id);
+        incUserInLocation(X+"-"+Y);
+
 
         // Add contacts
         for (Integer i : usersByLocation.get(X+"-"+Y))
@@ -109,6 +166,7 @@ public class ExecutionThread extends Thread {
             // Remove user from previous location
             //System.out.println("> User was "+u.getLocation());
             usersByLocation.get(u.getLocation()).remove(id);
+            decUserInLocation(u.getLocation());
 
             // If there are 0 or less than 5 users on a location, notify all
             if (usersByLocation.get(u.getLocation()).size() == 0)
@@ -122,6 +180,7 @@ public class ExecutionThread extends Thread {
 
             //Add user on new map location
             usersByLocation.get(X+"-"+Y).add(id);
+            incUserInLocation(X+"-"+Y);
 
             //Update contacts
             for (Integer i : usersByLocation.get(X+"-"+Y))
