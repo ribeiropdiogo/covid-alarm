@@ -20,10 +20,9 @@ public class ExecutionThread extends Thread {
     private final PrivateThread privThread;
     private final String distName, distNum;
     private final int gridSize;
-    private int nInfected, contacts;
+    private int nUsers, nInfected, contacts;
     private final HashMap<String, Set<Integer>> usersByLocation;
     private final HashMap<Integer, UserInfo> users;
-    private final Counter nUsers;
 
     
     public ExecutionThread(PublicThread pubThread, PrivateThread privThread,
@@ -33,7 +32,7 @@ public class ExecutionThread extends Thread {
         this.distName = distName;
         this.distNum = String.format("%02d", distNum);
         this.gridSize = gridSize;
-        this.nUsers = new Counter();
+        this.nUsers = 0;
         this.nInfected = 0;
         this.contacts = 0;
         this.usersByLocation = new HashMap<>();
@@ -76,7 +75,7 @@ public class ExecutionThread extends Thread {
     }
 
     private String addUser(int X, int Y) {
-        final int id = nUsers.inc();
+        final int id = ++nUsers;
         UserInfo ui = new UserInfo(id, X, Y);
 
         // Add User to Struct
