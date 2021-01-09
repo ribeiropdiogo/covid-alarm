@@ -1,122 +1,50 @@
 package server;
 
-import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-
 import java.io.IOException;
 import java.util.*;
 
-public class ExecutionThread extends Thread {
-    private PublicThread publict;
-    private PrivateThread privatet;
-    private String district, districtn, response;
-    private int gridSize, nusers, ninfected, contacts;
-    private HashMap<String, List<String>> usersByLocation;
-    private HashMap<String, UserInfo> users;
 
-    public ExecutionThread(PublicThread pubt, PrivateThread privt,String name, int n, int s){
-        this.publict = pubt;
-        this.privatet = privt;
-        this.district = name;
-        this.districtn = String.format("%02d", n);
-        this.gridSize = s;
-        this.nusers = 0;
-        this.ninfected = 0;
+public class ExecutionThread extends Thread {
+    
+    private final PublicThread pubThread;
+    private final PrivateThread privThread;
+    private final String distName, distNum;
+    private final int gridSize;
+    private int nInfected, contacts;
+    private final HashMap<String, Set<Integer>> usersByLocation;
+    private final HashMap<Integer, UserInfo> users;
+    private final Counter nUsers;
+
+    
+    public ExecutionThread(PublicThread pubThread, PrivateThread privThread,
+                           String distName, int distNum, int gridSize) {
+        this.pubThread = pubThread;
+        this.privThread = privThread;
+        this.distName = distName;
+        this.distNum = String.format("%02d", distNum);
+        this.gridSize = gridSize;
+        this.nUsers = new Counter();
+        this.nInfected = 0;
         this.contacts = 0;
-        this.usersByLocation = new HashMap<String, List<String>>();
+        this.usersByLocation = new HashMap<>();
 
         for (int i = 0; i <= gridSize; i++)
-            for (int j = 0; j <= gridSize; j++){
+            for (int j = 0; j <= gridSize; j++) {
                 // Keys X-Y
-                this.usersByLocation.put(i+"-"+j,new ArrayList<String>());
+                this.usersByLocation.put(i+"-"+j, new HashSet<>());
             }
 
-        this.users = new HashMap<String, UserInfo>();
-    }
-
-    private String addUser(int X, int Y){
-        String id = String.valueOf(users.size()+1);
-        UserInfo ui = new UserInfo(id,X,Y);
-
-        // Add User to Struct
-        if (users.containsKey(ui))
-            return "exists";
-        else
-            users.put(id, ui);
-
-        // Add this users to the map
-        this.usersByLocation.get(X+"-"+Y).add(id);
-
-        // Add contacts
-        for (String s : this.usersByLocation.get(X+"-"+Y))
-            if(s!=id){
-                this.users.get(id).addContact(s);
-                this.users.get(s).addContact(id);
-            }
-
-        nusers++;
-
-        // If there are more than 5 users on a location, notify all
-        int us = this.usersByLocation.get(X+"-"+Y).size();
-        if (us > 5)
-            publict.sendMessage("There are "+us+" users at "+X+"-"+Y);
-
-        return id;
-    }
-
-    private String updateLocation(String id, int X, int Y){
-
-        // Checks if user exists
-        if (!users.containsKey(id))
-            return "no_user";
-        else {
-            UserInfo u = this.users.get(id);
-
-            // Remove user from previous location
-            //System.out.println("> User was "+u.getLocation());
-            this.usersByLocation.get(u.getLocation()).remove(id);
-
-            // If there are 0 or less than 5 users on a location, notify all
-            if (this.usersByLocation.get(u.getLocation()).size() == 0)
-                publict.sendMessage("There are no users at "+u.getLocation());
-            else if(this.usersByLocation.get(u.getLocation()).size() < 5)
-                publict.sendMessage("There are less than 5 users at "+u.getLocation());
-
-            //Update user's own location
-            u.updateLocation(X,Y);
-            //System.out.println("> User is "+u.getLocation());
-
-            //Add user on new map location
-            this.usersByLocation.get(X+"-"+Y).add(id);
-
-            //Update contacts
-            for (String s : this.usersByLocation.get(X+"-"+Y))
-                if (s!=id) {
-                    this.users.get(id).addContact(s);
-                    this.users.get(s).addContact(id);
-                }
-
-            // If there are more than 5 users on a location, notify all
-            int us = this.usersByLocation.get(u.getLocation()).size();
-            if (us > 5)
-                publict.sendMessage("There are "+us+" users at "+u.getLocation());
-
-            //System.out.println("> contacts - " + this.users.get(id).getContacts());
-            return "success";
-        }
+        this.users = new HashMap<>();
     }
 
     //post of the district
@@ -124,17 +52,17 @@ public class ExecutionThread extends Thread {
         // Fazer o put
         try {
             CloseableHttpClient httpclient = HttpClients.createDefault();
-            HttpPut httpPut = new HttpPut("http://localhost:8080/"+district+"/");
+            HttpPut httpPut = new HttpPut("http://localhost:8080/"+ distName +"/");
             httpPut.setHeader("Accept", "application/json");
             httpPut.setHeader("Content-type", "application/json");
 
             // Ir buscar as estatísticas
-            List<NameValuePair> params = new ArrayList<NameValuePair>();
-            params.add(new BasicNameValuePair("users", String.valueOf(nusers)));
-            params.add(new BasicNameValuePair("infected", String.valueOf(ninfected)));
+            List<NameValuePair> params = new ArrayList<>();
+            params.add(new BasicNameValuePair("users", String.valueOf(nUsers)));
+            params.add(new BasicNameValuePair("infected", String.valueOf(nInfected)));
 
             int avg_contacts = 0;
-            if (ninfected>0) avg_contacts = contacts/ninfected;
+            if (nInfected > 0) avg_contacts = contacts/ nInfected;
 
             params.add(new BasicNameValuePair("avg_contacts", String.valueOf(avg_contacts)));
             httpPut.setEntity(new UrlEncodedFormEntity(params));
@@ -147,27 +75,93 @@ public class ExecutionThread extends Thread {
         }
     }
 
-    private String getUsersOn(int X, int Y){
-        // Return uses in location list
-        return String.valueOf(this.usersByLocation.get(X+"-"+Y).size());
-    }
+    private String addUser(int X, int Y) {
+        final int id = nUsers.inc();
+        UserInfo ui = new UserInfo(id, X, Y);
 
-    private String addInfected(String id){
-        // Checks if user exists
-        if (!users.containsKey(id))
-            return "no_user";
-        else {
-            // Notify all of new infection
-            publict.sendMessage("There is a new infection in the district.");
+        // Add User to Struct
+        users.put(id, ui);
 
-            // Notify user that had contact
-            for (String s : this.users.get(id).getContacts()) {
-                contacts++;
-                privatet.sendMessage(s,"You have contacted with an infected user :(");
+        // Add this user to the map
+        usersByLocation.get(X+"-"+Y).add(id);
+
+        // Add contacts
+        for (Integer i : usersByLocation.get(X+"-"+Y))
+            if (!i.equals(id)) {
+                users.get(id).addContact(i);
+                users.get(i).addContact(id);
             }
 
-            ninfected++;
-            return "success";
+        // If there are more than 5 users on a location, notify all
+        int us = usersByLocation.get(X+"-"+Y).size();
+        if (us > 5)
+            pubThread.sendMessage("There are "+us+" users at "+X+"-"+Y);
+
+        return String.valueOf(id);
+    }
+
+    private String updateLocation(int id, int X, int Y) {
+        // Checks if user exists
+        if (!users.containsKey(id))
+            return "error no_user";
+        else {
+            UserInfo u = users.get(id);
+
+            // Remove user from previous location
+            //System.out.println("> User was "+u.getLocation());
+            usersByLocation.get(u.getLocation()).remove(id);
+
+            // If there are 0 or less than 5 users on a location, notify all
+            if (usersByLocation.get(u.getLocation()).size() == 0)
+                pubThread.sendMessage("There are no users at "+u.getLocation());
+            else if (usersByLocation.get(u.getLocation()).size() < 5)
+                pubThread.sendMessage("There are less than 5 users at "+u.getLocation());
+
+            //Update user's own location
+            u.updateLocation(X,Y);
+            //System.out.println("> User is "+u.getLocation());
+
+            //Add user on new map location
+            usersByLocation.get(X+"-"+Y).add(id);
+
+            //Update contacts
+            for (Integer i : usersByLocation.get(X+"-"+Y))
+                if (!i.equals(id)) {
+                    users.get(id).addContact(i);
+                    users.get(i).addContact(id);
+                }
+
+            // If there are more than 5 users on a location, notify all
+            int us = usersByLocation.get(u.getLocation()).size();
+            if (us > 5)
+                pubThread.sendMessage("There are "+us+" users at "+u.getLocation());
+
+            //System.out.println("> contacts - " + users.get(id).getContacts());
+            return "ok";
+        }
+    }
+
+    private String getUsersOn(int X, int Y) {
+        // Return uses in location list
+        return String.valueOf(usersByLocation.get(X+"-"+Y).size());
+    }
+
+    private String addInfected(int id) {
+        // Checks if user exists
+        if (!users.containsKey(id))
+            return "error no_user";
+        else {
+            // Notify all of new infection
+            pubThread.sendMessage("There is a new infection in the district.");
+
+            // Notify user that had contact
+            for (Integer i : users.get(id).getContacts()) {
+                contacts++;
+                privThread.sendMessage(i,"You have contacted with an infected user :(");
+            }
+
+            nInfected++;
+            return "ok";
         }
     }
 
@@ -175,41 +169,45 @@ public class ExecutionThread extends Thread {
         try (ZContext context = new ZContext();
              ZMQ.Socket socket = context.createSocket(SocketType.REP))
         {
-            socket.bind("tcp://*:7"+this.districtn+"1");
+            String addr = "tcp://*:7" + distNum + "1";
+            socket.bind(addr);
+            System.out.println("> Socket bind to " + addr);
 
             while (true) {
                 byte[] msg = socket.recv();
-                String str = new String(msg);
-                String[] parts = str.split("_");
+                String request = new String(msg);
+                System.out.println("> Received: " + request);
+                String[] args = request.split(" ");
+                String response;
 
-                switch (parts[0]){
+                switch (args[0]) {
                     // nu -> new user
-                    // nu_locationX_locationY
+                    // nu <locationX> <locationY>
                     case "nu":
-                        response = addUser(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
-                        System.out.println("> Created user "+response);
+                        response = addUser(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+                        System.out.println("> Created user " + response);
                         socket.send(response);
                         break;
                     // ul -> update location
-                    // ul_id_locationX_locationY
+                    // ul <id> <locationX> <locationY>
                     case "ul":
-                        response = updateLocation(parts[1],Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
+                        response = updateLocation(Integer.parseInt(args[1]),Integer.parseInt(args[2]), Integer.parseInt(args[3]));
                         socket.send(response);
                         break;
                     // us -> users in location
-                    // us_locationX_locationY
+                    // us <locationX> <locationY>
                     case "us":
-                        response = getUsersOn(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+                        response = getUsersOn(Integer.parseInt(args[1]), Integer.parseInt(args[2]));
                         socket.send(response);
                         break;
                     // ai -> add infected user
-                    // ai_id
+                    // ai <id>
                     case "ai":
-                        response = addInfected(parts[1]);
+                        response = addInfected(Integer.parseInt(args[1]));
                         socket.send(response);
                         break;
                     default:
-                        socket.send("error");
+                        socket.send("error invalid_request");
                 }
             }
         }

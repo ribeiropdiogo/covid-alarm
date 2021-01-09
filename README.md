@@ -1,36 +1,72 @@
 # GoAwayBigCovid
 
+## Servidor Front-end
+
+### Porta
+
+`8000`
+
+### Formato dos Pedidos
+
+Primeiro pedido depois de estabelecer a ligação:
+
+| Pedido | Sintaxe | Resultado |
+| --- | --- | --- |
+| create account | `"ca <username> <password> <nº distrito> <locationX> <locationY>"` | <code>"ok" &#124; "error user_exists"</code> |
+| login | `"li <username> <password>"` | <code>"ok" &#124; "error invalid"</code> |
+| \<outro\> | - | `"error invalid_request"` |
+
+Restantes pedidos:
+
+| Pedido | Sintaxe | Resultado |
+| --- | --- | --- |
+| logout | `"lo"` | `"ok"` |
+| update location | `"ul <locationX> <locationY>"` | <code>"ok" &#124; "error no_user"</code> |
+| users in location | `"us <locationX> <locationY>"` | `"<number>"` |
+| add infected user | `"ai"` | <code>"ok" &#124; "error no_user"</code> |
+| \<outro\> | - | `"error invalid_request"` |
+
 ## Servidor Distrital
 
-Os números dos distritos são os seguintes, tendo sempre 2 dígitos: 
+### Distritos
 
-## Distritos 
+Os números dos distritos são os seguintes, tendo sempre 2 dígitos:
 
- 1. Aveiro 
- 2. Beja
- 3. Braga
- 4. Bragança
- 5. Castelo Branco
- 6. Coimbra
- 7. Évora
- 8. Faro
- 9. Guarda
- 10. Leiria
- 11. Lisboa
- 12. Portalegre
- 13. Porto
- 14. Santarém
- 15. Setúbal
- 16. Viana do Castelo
- 17. Vila Real
- 18. Viseu
- 
- ## Threads
- 
- 1. Thread Request/Reply
- 2. Thread Notificações Públicas
- 3. Thread Notificações Privadas
- 
- ## Formato das Portas
- 
- `7|nºdistrito|nºthread`
+`01`: Aveiro\
+`02`: Beja\
+`03`: Braga\
+`04`: Bragança\
+`05`: Castelo Branco\
+`06`: Coimbra\
+`07`: Évora\
+`08`: Faro\
+`09`: Guarda\
+`10`: Leiria\
+`11`: Lisboa\
+`12`: Portalegre\
+`13`: Porto\
+`14`: Santarém\
+`15`: Setúbal\
+`16`: Viana do Castelo\
+`17`: Vila Real\
+`18`: Viseu
+
+### Threads
+
+`1`: Thread Request/Reply\
+`2`: Thread Notificações Públicas\
+`3`: Thread Notificações Privadas
+
+### Formato das Portas
+
+`7|nºdistrito|nºthread`
+
+### Formato dos Pedidos
+
+| Pedido | Sintaxe | Resultado |
+| --- | --- | --- |
+| new user | `"nu <locationX> <locationY>"` | `"<id>"` |
+| update location | `"ul <id> <locationX> <locationY>"` | <code>"ok" &#124; "error no_user"</code> |
+| users in location | `"us <locationX> <locationY>"` | `"<number>"` |
+| add infected user | `"ai <id>"` | <code>"ok" &#124; "error no_user"</code> |
+| \<outro\> | | `"error invalid_request"` |

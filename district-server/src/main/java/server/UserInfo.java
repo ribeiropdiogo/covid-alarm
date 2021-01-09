@@ -4,31 +4,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserInfo {
-    private String userID;
+    private final int userID;
     private int locationX, locationY;
-    private List<String> contacts;
+    private final List<Integer> contacts;
 
-    public UserInfo(String id, int x, int y){
+    public UserInfo(int id, int x, int y) {
         this.userID = id;
         this.locationX = x;
         this.locationY = y;
         this.contacts = new ArrayList<>();
     }
 
-    public String getLocation(){
-        return this.locationX+"-"+this.locationY;
+    public String getLocation() {
+        return locationX + "-" + locationY;
     }
 
-    public void updateLocation(int x, int y){
+    public void updateLocation(int x, int y) {
         this.locationX = x;
         this.locationY = y;
     }
 
-    public void addContact(String user){
-        this.contacts.add(user);
+    public void addContact(Integer user) {
+        contacts.add(user);
     }
 
-    public List<String> getContacts(){
-        return this.contacts;
+    public List<Integer> getContacts() {
+        return contacts;
     }
 }

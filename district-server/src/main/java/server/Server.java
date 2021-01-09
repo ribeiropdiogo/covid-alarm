@@ -1,46 +1,47 @@
 package server;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 
 
 public class Server {
-    private static Options options = new Options();
+    private static final Options options = new Options();
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         JCommander parser = JCommander.newBuilder()
                 .addObject(options)
                 .build();
+        parser.setProgramName(Server.class.getSimpleName());
         try {
             parser.parse(args);
-            if (options.help) {
-                parser.usage();
-                return;
-            }
-
-            System.out.println("> Distric Server '" + options.name + "' started with number " + options.number);
-
-            // Criar as Threads para notificações públicas e privadas
-            PublicThread publict = new PublicThread(options.name,options.number);
-            PrivateThread privatet = new PrivateThread(options.name,options.number);
-            publict.start();
-            privatet.start();
-
-            ExecutionThread et = new ExecutionThread(publict,privatet,options.name,options.number,options.grid);
-            et.start();
-
-            while(true) {
-                try {
-                    Thread.sleep(5000);
-                    System.out.println("> Sending information to the directory");
-                    et.updateDistrict();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-        } catch(Exception e) {
+        } catch(ParameterException e) {
             parser.usage();
             return;
+        }
+
+        if (options.help || options.dNumber < 1 || options.dNumber > 18) {
+            parser.usage();
+            return;
+        }
+
+        System.out.println("> Distric Server '" + options.dName + "' started with number " + options.dNumber);
+
+        // Criar as Threads para notificações públicas e privadas
+        PublicThread pubThread = new PublicThread(options.dName, options.dNumber);
+        PrivateThread privThread = new PrivateThread(options.dName, options.dNumber);
+        pubThread.start();
+        privThread.start();
+
+        ExecutionThread execThread = new ExecutionThread(pubThread, privThread, options.dName, options.dNumber, options.gSize);
+        execThread.start();
+
+        while(true) {
+            try {
+                Thread.sleep(Long.MAX_VALUE);
+                System.out.println("> Sending information to the directory");
+                execThread.updateDistrict();
+            } catch (InterruptedException ignored) {
+            }
         }
     }
 }

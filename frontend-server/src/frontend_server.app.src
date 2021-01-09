@@ -1,0 +1,14 @@
+{application, frontend_server, [
+    {description, "Front-end Server"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib,
+        chumak
+    ]},
+    {env, []},
+    {modules, []},
+    {licenses, []},
+    {links, []}
+]}.

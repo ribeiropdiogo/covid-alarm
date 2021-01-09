@@ -3,18 +3,16 @@ package server;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Scanner;
+
 
 public class PublicThread extends Thread {
 
-    private String district, districtn;
-    private Queue<String> queue;
+    private final String district, districtn;
+    private final Queue<String> queue;
 
-    public PublicThread(String name, int n){
+    public PublicThread(String name, int n) {
         this.district = name;
         this.districtn = String.format("%02d", n);
         this.queue = new LinkedList<>();
