@@ -24,6 +24,9 @@ loop(Accounts) ->
                 {ok, {ID, Password, DistNum, false}} ->
                     From ! {{ok, ID, DistNum}, ?MODULE},
                     loop(maps:update(Username, {ID, Password, DistNum, true}, Accounts));
+                {ok, {_, Password, _, true}} ->
+                    From ! {already_logged_in, ?MODULE},
+                    loop(Accounts);
                 _ ->
                     From ! {invalid, ?MODULE},
                     loop(Accounts)
@@ -43,7 +46,7 @@ loop(Accounts) ->
 % create_account(Username, Password) -> ok | user_exists
 create_account(Username, ID, Password, DistNum) -> rpc({create_account, Username, ID, Password, DistNum}).
 
-% login(Username, Password) -> ok | invalid
+% login(Username, Password) -> ok | invalid | already_logged_in
 login(Username, Password) -> rpc({login, Username, Password}).
 
 % logout(Username) -> ok

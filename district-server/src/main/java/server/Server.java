@@ -28,7 +28,7 @@ public class Server {
 
         // Criar as Threads para notificações públicas e privadas
         PublicThread pubThread = new PublicThread(options.dName, options.dNumber);
-        PrivateThread privThread = new PrivateThread(options.dName, options.dNumber);
+        PrivateThread privThread = new PrivateThread(options.dNumber);
         pubThread.start();
         privThread.start();
 

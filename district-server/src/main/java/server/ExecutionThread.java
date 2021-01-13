@@ -1,13 +1,10 @@
 package server;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
@@ -63,25 +60,33 @@ public class ExecutionThread extends Thread {
 
     private String jsonAux(){
         LinkedHashMap<String, Integer> map = sortUserAmount();
-        String s = "";
+        StringBuilder s = new StringBuilder();
 
         int i = 0;
 
-        s+= "   'top5': {\n";
+        s.append("   'top5': {\n");
 
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
-            if (i < 4){
-                s+= "      '"+entry.getKey()+"': "+entry.getValue()+",\n";
+            if (i < 4) {
+                s.append("      '")
+                        .append(entry.getKey())
+                        .append("': ")
+                        .append(entry.getValue())
+                        .append(",\n");
                 i++;
-            } else if (i == 4){
-                s+= "      '"+entry.getKey()+"': "+entry.getValue()+"\n";
+            } else if (i == 4) {
+                s.append("      '")
+                        .append(entry.getKey())
+                        .append("': ")
+                        .append(entry.getValue())
+                        .append("\n");
                 i++;
             }
         }
 
-        s+= "   },\n";
+        s.append("   },\n");
 
-        return s;
+        return s.toString();
     }
 
     //post of the district
@@ -95,8 +100,6 @@ public class ExecutionThread extends Thread {
 
             int avg_contacts = 0;
             if (nInfected > 0) avg_contacts = contacts/ nInfected;
-
-
 
             String json = "{\n" +
                         "   'district': "+distName+",\n" +

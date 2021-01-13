@@ -9,18 +9,16 @@ import java.util.Queue;
 
 public class PrivateThread extends Thread {
 
-    private final String distName, distNum;
+    private final String distNum;
     private final Queue<String> queue;
 
-    public PrivateThread(String name, int n) {
-        this.distName = name;
+    public PrivateThread(int n) {
         this.distNum = String.format("%02d", n);
         this.queue = new LinkedList<>();
     }
 
     public void sendMessage(int user, String msg) {
-        String s = user + "_" + msg;
-        queue.add(s);
+        queue.add(user + " " + msg);
     }
 
     public void run() {
@@ -30,13 +28,11 @@ public class PrivateThread extends Thread {
             socket.bind("tcp://*:7" + distNum + "3");
             while (true) {
                 if (!queue.isEmpty())
-                    socket.send(distName + "_" + queue.remove());
+                    socket.send(distNum + " " + queue.remove());
                 Thread.sleep(500);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
-
-
 }

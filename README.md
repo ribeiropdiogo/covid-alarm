@@ -2,18 +2,20 @@
 
 ## Servidor Front-end
 
-### Porta
+### Pedidos
 
-`8000`
+#### Porta
 
-### Formato dos Pedidos
+`8001`
+
+#### Formato
 
 Primeiro pedido depois de estabelecer a ligação:
 
 | Pedido | Sintaxe | Resultado |
 | --- | --- | --- |
 | create account | `"ca <username> <password> <nº distrito> <locationX> <locationY>"` | <code>"ok" &#124; "error user_exists"</code> |
-| login | `"li <username> <password>"` | <code>"ok" &#124; "error invalid"</code> |
+| login | `"li <username> <password>"` | <code>"ok" &#124; "error invalid" &#124; "error already_logged_in"</code> |
 | \<outro\> | - | `"error invalid_request"` |
 
 Restantes pedidos:
@@ -25,6 +27,20 @@ Restantes pedidos:
 | users in location | `"us <locationX> <locationY>"` | `"<number>"` |
 | add infected user | `"ai"` | <code>"ok" &#124; "error no_user"</code> |
 | \<outro\> | - | `"error invalid_request"` |
+
+( i ) Nenhum dos argumentos pode conter espaços
+
+### Notificações Privadas
+
+#### Porta
+
+`8002`
+
+#### Formato
+
+`"<nº distrito> <id utilizador> <mensagem>"`
+
+( i ) `<mensagem>` pode conter espaços
 
 ## Servidor Distrital
 
@@ -69,4 +85,4 @@ Os números dos distritos são os seguintes, tendo sempre 2 dígitos:
 | update location | `"ul <id> <locationX> <locationY>"` | <code>"ok" &#124; "error no_user"</code> |
 | users in location | `"us <locationX> <locationY>"` | `"<number>"` |
 | add infected user | `"ai <id>"` | <code>"ok" &#124; "error no_user"</code> |
-| \<outro\> | | `"error invalid_request"` |
+| \<outro\> | - | `"error invalid_request"` |
