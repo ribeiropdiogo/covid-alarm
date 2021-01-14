@@ -10,10 +10,10 @@ import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 import java.io.IOException;
 import java.util.*;
-
+import common.District;
 
 public class ExecutionThread extends Thread {
-    
+
     private final PublicThread pubThread;
     private final PrivateThread privThread;
     private final String distName, distNum;
@@ -23,9 +23,8 @@ public class ExecutionThread extends Thread {
     private final HashMap<String, Integer> numberOfUsersByLocation;
     private final HashMap<Integer, UserInfo> users;
 
-    
-    public ExecutionThread(PublicThread pubThread, PrivateThread privThread,
-                           String distName, int distNum, int gridSize) {
+    public ExecutionThread(PublicThread pubThread, PrivateThread privThread, String distName, int distNum,
+            int gridSize) {
         this.pubThread = pubThread;
         this.privThread = privThread;
         this.distName = distName;
@@ -40,78 +39,40 @@ public class ExecutionThread extends Thread {
         for (int i = 0; i <= gridSize; i++)
             for (int j = 0; j <= gridSize; j++) {
                 // Keys X-Y
-                this.usersByLocation.put(i+"-"+j, new HashSet<>());
-                this.numberOfUsersByLocation.put(i+"-"+j,0);
+                this.usersByLocation.put(i + "-" + j, new HashSet<>());
+                this.numberOfUsersByLocation.put(i + "-" + j, 0);
             }
 
         this.users = new HashMap<>();
     }
 
-    private LinkedHashMap<String, Integer> sortUserAmount(){
+    private LinkedHashMap<String, Integer> sortUserAmount() {
         LinkedHashMap<String, Integer> sortedMap = new LinkedHashMap<>();
 
-        numberOfUsersByLocation.entrySet()
-                .stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+        numberOfUsersByLocation.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .forEachOrdered(x -> sortedMap.put(x.getKey(), x.getValue()));
 
         return sortedMap;
     }
 
-    private String jsonAux(){
-        LinkedHashMap<String, Integer> map = sortUserAmount();
-        StringBuilder s = new StringBuilder();
-
-        int i = 0;
-
-        s.append("   'top5': {\n");
-
-        for (Map.Entry<String, Integer> entry : map.entrySet()) {
-            if (i < 4) {
-                s.append("      '")
-                        .append(entry.getKey())
-                        .append("': ")
-                        .append(entry.getValue())
-                        .append(",\n");
-                i++;
-            } else if (i == 4) {
-                s.append("      '")
-                        .append(entry.getKey())
-                        .append("': ")
-                        .append(entry.getValue())
-                        .append("\n");
-                i++;
-            }
-        }
-
-        s.append("   },\n");
-
-        return s.toString();
-    }
-
-    //post of the district
+    // post of the district
     public void putToDirectory() {
         // Fazer o put
         try {
             CloseableHttpClient httpclient = HttpClients.createDefault();
-            HttpPut httpPut = new HttpPut("http://localhost:8080/"+ distName +"/");
+            HttpPut httpPut = new HttpPut("http://localhost:8080/" + distName + "/");
             httpPut.setHeader("Accept", "application/json");
             httpPut.setHeader("Content-type", "application/json");
+            District d = new District(distName, nUsers, nInfected, contacts, sortUserAmount());
 
             int avg_contacts = 0;
-            if (nInfected > 0) avg_contacts = contacts/ nInfected;
+            if (nInfected > 0)
+                avg_contacts = contacts / nInfected;
 
-            String json = "{\n" +
-                        "   'district': "+distName+",\n" +
-                        "   'users':"+nUsers+",\n" +
-                        "   'infected':"+nInfected+",\n" +
-                        jsonAux() +
-                        "   'avg_contacts':"+avg_contacts+"\n" +
-                    "}";
+            System.out.println(d.toJson());
 
-            System.out.println(json);
+            httpPut.setEntity(new StringEntity(d.toJson()));
 
-            httpPut.setEntity(new StringEntity(json));
             CloseableHttpResponse response = httpclient.execute(httpPut);
             System.out.println("> PUT response -> " + response.getStatusLine().getStatusCode());
             httpclient.close();
@@ -120,16 +81,16 @@ public class ExecutionThread extends Thread {
         }
     }
 
-    private void incUserInLocation(String key){
+    private void incUserInLocation(String key) {
         int users = numberOfUsersByLocation.get(key);
         users++;
-        numberOfUsersByLocation.put(key,users);
+        numberOfUsersByLocation.put(key, users);
     }
 
-    private void decUserInLocation(String key){
+    private void decUserInLocation(String key) {
         int users = numberOfUsersByLocation.get(key);
         users--;
-        numberOfUsersByLocation.put(key,users);
+        numberOfUsersByLocation.put(key, users);
     }
 
     private String addUser(int X, int Y) {
@@ -140,21 +101,20 @@ public class ExecutionThread extends Thread {
         users.put(id, ui);
 
         // Add this user to the map
-        usersByLocation.get(X+"-"+Y).add(id);
-        incUserInLocation(X+"-"+Y);
-
+        usersByLocation.get(X + "-" + Y).add(id);
+        incUserInLocation(X + "-" + Y);
 
         // Add contacts
-        for (Integer i : usersByLocation.get(X+"-"+Y))
+        for (Integer i : usersByLocation.get(X + "-" + Y))
             if (!i.equals(id)) {
                 users.get(id).addContact(i);
                 users.get(i).addContact(id);
             }
 
         // If there are more than 5 users on a location, notify all
-        int us = usersByLocation.get(X+"-"+Y).size();
+        int us = usersByLocation.get(X + "-" + Y).size();
         if (us > 5)
-            pubThread.sendMessage("There are "+us+" users at "+X+"-"+Y);
+            pubThread.sendMessage("There are " + us + " users at " + X + "-" + Y);
 
         return String.valueOf(id);
     }
@@ -167,26 +127,26 @@ public class ExecutionThread extends Thread {
             UserInfo u = users.get(id);
 
             // Remove user from previous location
-            //System.out.println("> User was "+u.getLocation());
+            // System.out.println("> User was "+u.getLocation());
             usersByLocation.get(u.getLocation()).remove(id);
             decUserInLocation(u.getLocation());
 
             // If there are 0 or less than 5 users on a location, notify all
             if (usersByLocation.get(u.getLocation()).size() == 0)
-                pubThread.sendMessage("There are no users at "+u.getLocation());
+                pubThread.sendMessage("There are no users at " + u.getLocation());
             else if (usersByLocation.get(u.getLocation()).size() < 5)
-                pubThread.sendMessage("There are less than 5 users at "+u.getLocation());
+                pubThread.sendMessage("There are less than 5 users at " + u.getLocation());
 
-            //Update user's own location
-            u.updateLocation(X,Y);
-            //System.out.println("> User is "+u.getLocation());
+            // Update user's own location
+            u.updateLocation(X, Y);
+            // System.out.println("> User is "+u.getLocation());
 
-            //Add user on new map location
-            usersByLocation.get(X+"-"+Y).add(id);
-            incUserInLocation(X+"-"+Y);
+            // Add user on new map location
+            usersByLocation.get(X + "-" + Y).add(id);
+            incUserInLocation(X + "-" + Y);
 
-            //Update contacts
-            for (Integer i : usersByLocation.get(X+"-"+Y))
+            // Update contacts
+            for (Integer i : usersByLocation.get(X + "-" + Y))
                 if (!i.equals(id)) {
                     users.get(id).addContact(i);
                     users.get(i).addContact(id);
@@ -195,16 +155,16 @@ public class ExecutionThread extends Thread {
             // If there are more than 5 users on a location, notify all
             int us = usersByLocation.get(u.getLocation()).size();
             if (us > 5)
-                pubThread.sendMessage("There are "+us+" users at "+u.getLocation());
+                pubThread.sendMessage("There are " + us + " users at " + u.getLocation());
 
-            //System.out.println("> contacts - " + users.get(id).getContacts());
+            // System.out.println("> contacts - " + users.get(id).getContacts());
             return "ok";
         }
     }
 
     private String getUsersOn(int X, int Y) {
         // Return uses in location list
-        return String.valueOf(usersByLocation.get(X+"-"+Y).size());
+        return String.valueOf(usersByLocation.get(X + "-" + Y).size());
     }
 
     private String addInfected(int id) {
@@ -218,7 +178,7 @@ public class ExecutionThread extends Thread {
             // Notify user that had contact
             for (Integer i : users.get(id).getContacts()) {
                 contacts++;
-                privThread.sendMessage(i,"You have contacted with an infected user :(");
+                privThread.sendMessage(i, "You have contacted with an infected user :(");
             }
 
             nInfected++;
@@ -227,9 +187,7 @@ public class ExecutionThread extends Thread {
     }
 
     public void run() {
-        try (ZContext context = new ZContext();
-             ZMQ.Socket socket = context.createSocket(SocketType.REP))
-        {
+        try (ZContext context = new ZContext(); ZMQ.Socket socket = context.createSocket(SocketType.REP)) {
             String addr = "tcp://*:7" + distNum + "1";
             socket.bind(addr);
             System.out.println("> Socket bind to " + addr);
@@ -252,7 +210,8 @@ public class ExecutionThread extends Thread {
                     // ul -> update location
                     // ul <id> <locationX> <locationY>
                     case "ul":
-                        response = updateLocation(Integer.parseInt(args[1]),Integer.parseInt(args[2]), Integer.parseInt(args[3]));
+                        response = updateLocation(Integer.parseInt(args[1]), Integer.parseInt(args[2]),
+                                Integer.parseInt(args[3]));
                         socket.send(response);
                         break;
                     // us -> users in location
