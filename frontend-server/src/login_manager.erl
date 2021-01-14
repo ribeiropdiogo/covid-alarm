@@ -46,7 +46,7 @@ loop(Accounts) ->
 % create_account(Username, Password) -> ok | user_exists
 create_account(Username, ID, Password, DistNum) -> rpc({create_account, Username, ID, Password, DistNum}).
 
-% login(Username, Password) -> ok | invalid | already_logged_in
+% login(Username, Password) -> ok | already_logged_in | invalid
 login(Username, Password) -> rpc({login, Username, Password}).
 
 % logout(Username) -> ok

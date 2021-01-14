@@ -8,7 +8,7 @@ import java.net.Socket;
 public class Client {
 
     public static void main(String[] args) throws IOException {
-        final Socket socket = new Socket("localhost", 8000);
+        final Socket socket = new Socket("localhost", 8001);
 
         System.out.println("Connection established - " + socket.toString());
         

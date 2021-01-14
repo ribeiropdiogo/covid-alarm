@@ -1,30 +1,5 @@
 -module(util).
--export([connect_districts/0, parse/1]).
-
-%%====================================================================
-%% connect to the districts
-%%====================================================================
-
-connect_districts() -> connect_districts(1, #{}).
-
-
-connect_districts(DistrictNum, Map) ->
-    if
-        DistrictNum > 18 ->
-            {ok, Map};
-        true ->
-            {ok, Socket} = chumak:socket(req),
-            Port = 7000 + DistrictNum*10 + 1,
-            case chumak:connect(Socket, tcp, "localhost", Port) of
-                {ok, _} ->
-                    NewMap = maps:put(DistrictNum, Socket, Map),
-                    connect_districts(DistrictNum+1, NewMap);
-                {error, Reason} ->
-                    {error, unicode:characters_to_list(["Connection failed: ", Reason], utf8)};
-                Reply ->
-                    {error, unicode:characters_to_list(["Unhandled reply: ", Reply], utf8)}
-            end
-    end.
+-export([parse/1]).
 
 %%====================================================================
 %% parse arguments

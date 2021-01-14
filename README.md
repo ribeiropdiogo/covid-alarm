@@ -10,12 +10,12 @@
 
 #### Formato
 
-Primeiro pedido depois de estabelecer a ligação:
+Primeiro pedido depois de estabelecer a ligação (ou depois de fazer log out):
 
 | Pedido | Sintaxe | Resultado |
 | --- | --- | --- |
 | create account | `"ca <username> <password> <nº distrito> <locationX> <locationY>"` | <code>"ok" &#124; "error user_exists"</code> |
-| login | `"li <username> <password>"` | <code>"ok" &#124; "error invalid" &#124; "error already_logged_in"</code> |
+| login | `"li <username> <password>"` | <code>"ok" &#124; "error already_logged_in" &#124; "error invalid"</code> |
 | \<outro\> | - | `"error invalid_request"` |
 
 Restantes pedidos:

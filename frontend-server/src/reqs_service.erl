@@ -14,29 +14,46 @@ start(Port) -> spawn(fun() -> init(Port) end).
 
 init(Port) ->
     % connect to district servers
-    case util:connect_districts() of
-        {ok, Districts} ->
-            % open port
-            {ok, ServSock} = gen_tcp:listen(Port, [list, {active, once}, {packet, line}, {reuseaddr, true}]),
-            io:format("Listening on port ~b...~n", [Port]),
-            % start accepting connections (on the main process)
-            acceptor(ServSock, Districts);
-        {error, Msg} ->
-            io:format("Error connecting to the district servers~n"),
-            io:format("  ~s~n", [Msg])
+    {ok, Districts} = connect_districts(),
+    io:format("[REQ/REP] Connected to the district servers...~n"),
+    % open port
+    {ok, ServSock} = gen_tcp:listen(Port, [list, {active, once}, {packet, line}, {reuseaddr, true}]),
+    io:format("[REQ/REP] Listening on port ~b...~n", [Port]),
+    % start accepting connections (on the main process)
+    acceptor(ServSock, Districts).
+
+%%====================================================================
+%% Connect to the districts
+%%====================================================================
+
+connect_districts() -> connect_districts(1, #{}).
+
+
+connect_districts(DistrictNum, Map) ->
+    if
+        DistrictNum > 18 ->
+            {ok, Map};
+        true ->
+            {ok, Socket} = chumak:socket(req),
+            Port = 7000 + DistrictNum*10 + 1,
+            {ok, _} = chumak:connect(Socket, tcp, "localhost", Port),
+            NewMap = maps:put(DistrictNum, Socket, Map),
+            connect_districts(DistrictNum+1, NewMap)
     end.
 
 %%====================================================================
-%% Internal functions
+%% State
 %%====================================================================
 
 acceptor(ServSock, Districts) ->
     {ok, CliSock} = gen_tcp:accept(ServSock),
-    spawn(fun() -> acceptor(ServSock, Districts) end),
-    authenticate(CliSock, Districts).
+    io:format("[~p] Connection accepted~n", [CliSock]),
+    Pid = spawn(fun() -> authenticator(CliSock, Districts) end),
+    gen_tcp:controlling_process(CliSock, Pid),
+    acceptor(ServSock, Districts).
 
 
-authenticate(CliSock, Districts) ->
+authenticator(CliSock, Districts) ->
     receive
         % create account
         {tcp, _, "ca " ++ Args} ->
@@ -55,12 +72,12 @@ authenticate(CliSock, Districts) ->
             % create local account
             case login_manager:create_account(Username, ID, Password, DistNum) of
                 ok ->
+                    io:format("[~s :: ~s] Created an account~n", [Username, ID]),
                     gen_tcp:send(CliSock, "ok\n"),
-                    io:format("user {~s, ~s} :: created an account~n", [Username, ID]),
-                    user({Username, ID}, CliSock, DistSock);
+                    user({Username, ID}, CliSock, DistSock, Districts);
                 user_exists ->
                     gen_tcp:send(CliSock, "error user_exists\n"),
-                    authenticate(CliSock, Districts)
+                    authenticator(CliSock, Districts)
             end;
         % login
         {tcp, _, "li " ++ Args} ->
@@ -69,62 +86,65 @@ authenticate(CliSock, Districts) ->
             inet:setopts(CliSock, [{active, once}]),
             case login_manager:login(Username, Password) of
                 {ok, ID, DistNum} ->
+                    io:format("[~s :: ~s] Logged in~n", [Username, ID]),
                     % get district's socket
                     DistSock = maps:get(DistNum, Districts),
                     gen_tcp:send(CliSock, "ok\n"),
-                    io:format("user {~s, ~s} :: logged in~n", [Username, ID]),
-                    user({Username, ID}, CliSock, DistSock);
+                    user({Username, ID}, CliSock, DistSock, Districts);
                 already_logged_in ->
                     gen_tcp:send(CliSock, "error already_logged_in\n"),
-                    authenticate(CliSock, Districts);
+                    authenticator(CliSock, Districts);
                 invalid ->
                     gen_tcp:send(CliSock, "error invalid\n"),
-                    authenticate(CliSock, Districts)
+                    authenticator(CliSock, Districts)
             end;
         % other
-        {tcp, _, _} ->
+        {tcp, _, Req} ->
+            io:format("[~p] Error: invalid request (~p)~n", [CliSock, Req]),
             inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, "error invalid_request\n"),
-            authenticate(CliSock, Districts);
+            authenticator(CliSock, Districts);
         {tcp_closed, _} ->
-            io:format("user disconnected~n");
-        {tcp_error, _, _} ->
-            io:format("tcp error~n")
+            io:format("[~p] Disconnected~n", [CliSock]);
+        {tcp_error, _, Reason} ->
+            io:format("[~p] TCP error: ~p~n", [CliSock, Reason])
     end.
 
 
-user({Name, ID} = User, CliSock, DistSock) ->
+user({Name, ID} = User, CliSock, DistSock, Districts) ->
     receive
         {tcp, _, "lo\n"} ->
+            io:format("[~s :: ~s] Logged out~n", [Name, ID]),
             login_manager:logout(Name),
+            inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, "ok\n"),
-            io:format("user {~s, ~s} :: logged out~n", [Name, ID]);
+            authenticator(CliSock, Districts);
         {tcp, _, "ul " ++ Args} ->
             chumak:send(DistSock, "ul " ++ ID ++ " " ++ string:trim(Args)),
             {ok, Response} = chumak:recv(DistSock),
             inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, binary_to_list(Response) ++ "\n"),
-            user(User, CliSock, DistSock);
+            user(User, CliSock, DistSock, Districts);
         {tcp, _, ("us " ++ _) = Data} ->
             chumak:send(DistSock, string:trim(Data)),
             {ok, Response} = chumak:recv(DistSock),
             inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, binary_to_list(Response) ++ "\n"),
-            user(User, CliSock, DistSock);
+            user(User, CliSock, DistSock, Districts);
         {tcp, _, "ai\n"} ->
             chumak:send(DistSock, "ai " ++ ID),
             {ok, Response} = chumak:recv(DistSock),
             inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, binary_to_list(Response) ++ "\n"),
-            user(User, CliSock, DistSock);
+            user(User, CliSock, DistSock, Districts);
         {tcp, _, _} ->
             inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, "error invalid_request\n"),
-            user(User, CliSock, DistSock);
+            user(User, CliSock, DistSock, Districts);
         {tcp_closed, _} ->
-            login_manager:logout(Name),
-            io:format("user {~s, ~s} :: disconnected~n", [Name, ID]);
-        {tcp_error, _, _} ->
-            login_manager:logout(Name),
-            io:format("user {~s, ~s} :: tcp error~n", [Name, ID])
+            io:format("[~s :: ~s] Disconnected~n", [Name, ID]),
+            login_manager:logout(Name);
+        {tcp_error, _, Reason} ->
+            io:format("[~s :: ~s] TCP error: ~p~n", [Name, ID, Reason]),
+            login_manager:logout(Name)
     end.

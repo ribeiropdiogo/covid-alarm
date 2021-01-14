@@ -2,9 +2,10 @@
 *.DS_Store
 
 # Erlang Trash
-frontend-server/*.beam
+*.beam
 frontend-server/_build/
 frontend-server/rebar.lock
+frontend-server/rebar3
 
 # IntelliJ Trash
 .idea/
