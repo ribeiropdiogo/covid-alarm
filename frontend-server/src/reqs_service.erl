@@ -73,7 +73,7 @@ authenticator(CliSock, Districts) ->
             case login_manager:create_account(Username, ID, Password, DistNum) of
                 ok ->
                     io:format("[~s :: ~s] Created an account~n", [Username, ID]),
-                    gen_tcp:send(CliSock, "ok\n"),
+                    gen_tcp:send(CliSock, "ok " ++ DistNumStr ++ " " ++ ID ++ "\n"),
                     user({Username, ID}, CliSock, DistSock, Districts);
                 user_exists ->
                     gen_tcp:send(CliSock, "error user_exists\n"),
@@ -85,11 +85,11 @@ authenticator(CliSock, Districts) ->
             [Username, Password] = util:parse(Args),
             inet:setopts(CliSock, [{active, once}]),
             case login_manager:login(Username, Password) of
-                {ok, ID, DistNum} ->
+                {ok, DistNum, ID} ->
                     io:format("[~s :: ~s] Logged in~n", [Username, ID]),
                     % get district's socket
                     DistSock = maps:get(DistNum, Districts),
-                    gen_tcp:send(CliSock, "ok\n"),
+                    gen_tcp:send(CliSock, "ok " ++ integer_to_list(DistNum) ++ " " ++ ID ++ "\n"),
                     user({Username, ID}, CliSock, DistSock, Districts);
                 already_logged_in ->
                     gen_tcp:send(CliSock, "error already_logged_in\n"),
