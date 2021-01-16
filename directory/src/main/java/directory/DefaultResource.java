@@ -9,13 +9,15 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Path("/")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class DefaultResource implements ResourceInterface {
 
+    /*
+      Retrieves all districts
+   */
     @GET
     @Timed
     @Path("/")
@@ -33,6 +35,9 @@ public class DefaultResource implements ResourceInterface {
         return Response.status(Response.Status.NOT_FOUND).build();
     }
 
+    /*
+       Retrieves the number of users given a certain district's name
+    */
     @GET
     @Timed
     @Path("district/getTotalUsers")
@@ -50,7 +55,9 @@ public class DefaultResource implements ResourceInterface {
         return Response.status(Response.Status.NOT_FOUND).build();
     }
 
-
+    /*
+       Retrieves the number of users infected in a district
+    */
     @GET
     @Timed
     @Path("district/getTotalInfected")
@@ -68,6 +75,9 @@ public class DefaultResource implements ResourceInterface {
         return Response.status(Response.Status.NOT_FOUND).build();
     }
 
+    /*
+   Retrieves the list of top 5 districts with more users infected per total users
+    */
     @GET
     @Timed
     @Path("/getRacioMostInfected")
@@ -85,6 +95,9 @@ public class DefaultResource implements ResourceInterface {
         return Response.status(Response.Status.NOT_FOUND).build();
     }
 
+    /*
+   Retrieves the list of top 5 crowded locations
+    */
     @GET
     @Timed
     @Path("/getMostCrowded")
@@ -102,6 +115,9 @@ public class DefaultResource implements ResourceInterface {
         return Response.status(Response.Status.NOT_FOUND).build();
     }
 
+    /*
+    Retrieves the mean of users that have been together with an infected user
+     */
     @GET
     @Timed
     @Path("/getUsersMeetInfected")
@@ -121,11 +137,7 @@ public class DefaultResource implements ResourceInterface {
 
 
     /*
-  To update an existing district, we’re going to use the HTTP PUT method. PUT is an idempotent method
-  which means that executing the same request multiple times does not create additional state on
-  the server. As with retrieving a single district, we’re going to need to read the district's name
-  from the path using the @PathParam annotation.
-   */
+    To update an existing district, we’re going to use the HTTP PUT method.
     @PUT
     @Path("/district/{name}")
     @Override
@@ -151,6 +163,9 @@ public class DefaultResource implements ResourceInterface {
         return Response.ok(Response.Status.NOT_FOUND).build();
     }
 
+    /*
+    Removes a district
+     */
     @DELETE
     @Path("/delete/{name}")
     @Override
@@ -167,9 +182,7 @@ public class DefaultResource implements ResourceInterface {
     }
 
     /*
-    Keep in mind that no validation is performed. If none of the fields in the request body match the
-    fields in the District class, a new instance of District will still be created but all of its instance
-    fields will be null.
+    Creates a district
      */
     @POST
     @Path("/district/{name}")

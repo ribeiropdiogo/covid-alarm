@@ -17,7 +17,6 @@ public class Data {
                 return district;
             }
         }
-
         infoPerDistrict.add(district);
 
         return district;
@@ -81,6 +80,7 @@ public class Data {
         return result;
     }
 
+    //Calculates the racio between totalInfected/allUsers by district
     private static float racioInfectedUsers(District district) {
         float res = ((float)district.getTotalInfected()/(float)district.getTotalUsers());
         return res;
@@ -125,11 +125,12 @@ public class Data {
                 .collect(Collectors.toList());
     }
 
-
+    //Returns the names of the top 5 locations more crowded
     public static List<String> top5CrowdedLocation(){
         return top5CrowdedLocation(infoPerDistrict);
     }
 
+    //Returns the mean of people that has been with an infected user in the same location
     public static float meanMeetInfected(List<District> info){
         float totalUsers = 0;
         float totalMeetInfected = 0;
@@ -141,6 +142,7 @@ public class Data {
         return (totalMeetInfected/totalUsers);
     }
 
+    //mean of users that have been together at the same location
     public static float meanMeetInfected(){
         return meanMeetInfected(infoPerDistrict);
     }

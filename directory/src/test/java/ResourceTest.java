@@ -175,4 +175,30 @@ public class ResourceTest {
         assertEquals("Remover o distrito de Lisboa:",true, actual);
         assertEquals("Remover o distrito do Porto:", true, actualPorto);
     }
+
+
+
+    @Test
+    public void updateDistrictExceptNameTest() {
+        Map<String, Integer> locationsPorto = new HashMap<String, Integer>();
+        locationsPorto.put("Porto", 350);
+        locationsPorto.put("StoTirso", 10);
+        locationsPorto.put("Gaia", 17);
+        locationsPorto.put("Maia", 30);
+        locationsPorto.put("Matosinhos", 45);
+        locationsPorto.put("Gondomar", 45);
+
+        District d = new District("Porto", 10000, 500, 100, locationsPorto);
+
+        Data.addDistrict(d);
+
+        District d2 = new District("Porto", 5000, 10, 10, locationsPorto);
+
+
+        District district = Data.updateDistrictExceptName(d2.getName(), d2);
+
+
+        // assert statements
+        assertEquals("Update o distrito de Porto:", d2, district);
+    }
 }

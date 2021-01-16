@@ -116,4 +116,35 @@ public class District {
         } catch (Exception e) {}
         return null;
     }
+
+    private boolean verifyLocation(Map<String,Integer> usersLocation, District district){
+
+        if (usersLocation.size() != district.getUsersPerLocation().size()) {
+            return false;
+        }
+
+        return usersLocation.entrySet().stream()
+                .allMatch(e -> e.getValue().equals(district.getUsersPerLocation()
+                        .get(e.getKey())));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // self check
+        if (this == o)
+            return true;
+        // null check
+        if (o == null)
+            return false;
+        // type check and cast
+        if (getClass() != o.getClass())
+            return false;
+        District district = (District) o;
+        // field comparison
+        return (this.getName().equals(district.getName()) &&
+                this.getTotalUsers()== district.getTotalUsers() &&
+                this.getMeetInfected() == district.getMeetInfected() &&
+                district.getTotalInfected() == district.getTotalInfected() &&
+                verifyLocation(this.getUsersPerLocation(), district));
+    }
 }
