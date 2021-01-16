@@ -1,6 +1,7 @@
 package server;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -22,6 +23,7 @@ public class ExecutionThread extends Thread {
     private final HashMap<String, Set<Integer>> usersByLocation;
     private final HashMap<String, Integer> numberOfUsersByLocation;
     private final HashMap<Integer, UserInfo> users;
+    private Boolean directoryCreated = false;
 
     public ExecutionThread(PublicThread pubThread, PrivateThread privThread, String distName, int distNum,
             int gridSize) {
@@ -30,9 +32,9 @@ public class ExecutionThread extends Thread {
         this.distName = distName;
         this.distNum = String.format("%02d", distNum);
         this.gridSize = gridSize;
-        this.nUsers = 0;
-        this.nInfected = 0;
-        this.contacts = 0;
+        this.nUsers = 100;
+        this.nInfected = 10;
+        this.contacts = 3;
         this.usersByLocation = new HashMap<>();
         this.numberOfUsersByLocation = new HashMap<>();
 
@@ -42,6 +44,13 @@ public class ExecutionThread extends Thread {
                 this.usersByLocation.put(i + "-" + j, new HashSet<>());
                 this.numberOfUsersByLocation.put(i + "-" + j, 0);
             }
+
+        this.numberOfUsersByLocation.put("2-3",10);
+        this.numberOfUsersByLocation.put("2-1",7);
+        this.numberOfUsersByLocation.put("3-3",2);
+        this.numberOfUsersByLocation.put("7-3",6);
+        this.numberOfUsersByLocation.put("1-3",11);
+        this.numberOfUsersByLocation.put("2-6",18);
 
         this.users = new HashMap<>();
     }
@@ -58,19 +67,36 @@ public class ExecutionThread extends Thread {
     public void putToDirectory() {
         // Fazer o put
         try {
-            CloseableHttpClient httpclient = HttpClients.createDefault();
-            HttpPut httpPut = new HttpPut("http://localhost:8080/" + distName + "/");
-            httpPut.setHeader("Accept", "application/json");
-            httpPut.setHeader("Content-type", "application/json");
-            District d = new District(distName, nUsers, nInfected, contacts, sortUserAmount());
+            if (directoryCreated) {
+                CloseableHttpClient httpclient = HttpClients.createDefault();
+                HttpPut httpPut = new HttpPut("http://localhost:8080/district/" + distName + "/");
+                httpPut.setHeader("Accept", "application/json");
+                httpPut.setHeader("Content-type", "application/json");
+                District d = new District(distName, nUsers, nInfected, contacts, sortUserAmount());
 
-            System.out.println(d.toJson());
+                //System.out.println(d.toJson());
 
-            httpPut.setEntity(new StringEntity(d.toJson()));
+                httpPut.setEntity(new StringEntity(d.toJson()));
 
-            CloseableHttpResponse response = httpclient.execute(httpPut);
-            System.out.println("> PUT response -> " + response.getStatusLine().getStatusCode());
-            httpclient.close();
+                CloseableHttpResponse response = httpclient.execute(httpPut);
+                System.out.println("> PUT response -> " + response.getStatusLine().getStatusCode());
+                httpclient.close();
+            } else {
+                CloseableHttpClient httpclient = HttpClients.createDefault();
+                HttpPost httpPost = new HttpPost("http://localhost:8080/district/" + distName + "/");
+                httpPost.setHeader("Accept", "application/json");
+                httpPost.setHeader("Content-type", "application/json");
+                District d = new District(distName, nUsers, nInfected, contacts, sortUserAmount());
+
+                //System.out.println(d.toJson());
+
+                httpPost.setEntity(new StringEntity(d.toJson()));
+
+                CloseableHttpResponse response = httpclient.execute(httpPost);
+                System.out.println("> POST response -> " + response.getStatusLine().getStatusCode());
+                httpclient.close();
+                directoryCreated = true;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

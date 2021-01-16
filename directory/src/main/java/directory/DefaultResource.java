@@ -138,6 +138,7 @@ public class DefaultResource implements ResourceInterface {
 
     /*
     To update an existing district, we’re going to use the HTTP PUT method.
+    */
     @PUT
     @Path("/district/{name}")
     @Override
@@ -153,7 +154,7 @@ public class DefaultResource implements ResourceInterface {
 
                else  d = Data.updateDistrictExceptName(name, district);
 
-               if(!d.equals(null)) {
+               if(d != null) {
                     return Response.ok(d).build();
                }
             }
