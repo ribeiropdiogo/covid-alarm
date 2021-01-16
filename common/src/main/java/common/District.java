@@ -109,8 +109,11 @@ public class District {
                 + convertToString(usersPerLocation) + '\'' + '}';
     }
 
-    public String toJson() throws JsonProcessingException {
-        ObjectMapper om = new ObjectMapper();
-        return om.writeValueAsString(this);
+    public String toJson() {
+        try {
+            ObjectMapper om = new ObjectMapper();
+            return om.writeValueAsString(this);
+        } catch (Exception e) {}
+        return null;
     }
 }

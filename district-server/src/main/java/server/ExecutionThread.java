@@ -50,7 +50,7 @@ public class ExecutionThread extends Thread {
         LinkedHashMap<String, Integer> sortedMap = new LinkedHashMap<>();
 
         numberOfUsersByLocation.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .forEachOrdered(x -> sortedMap.put(x.getKey(), x.getValue()));
+                .limit(5).forEachOrdered(x -> sortedMap.put(x.getKey(), x.getValue()));
 
         return sortedMap;
     }
@@ -64,10 +64,6 @@ public class ExecutionThread extends Thread {
             httpPut.setHeader("Accept", "application/json");
             httpPut.setHeader("Content-type", "application/json");
             District d = new District(distName, nUsers, nInfected, contacts, sortUserAmount());
-
-            int avg_contacts = 0;
-            if (nInfected > 0)
-                avg_contacts = contacts / nInfected;
 
             System.out.println(d.toJson());
 
