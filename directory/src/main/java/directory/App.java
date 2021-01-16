@@ -5,7 +5,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.setup.Environment;
 
 public class App extends Application<Configuration> {
-    public static void main( String[] args ) throws Exception {
+    public static void main(String[] args) throws Exception {
         String currentDirectory = System.getProperty("user.dir");
         System.out.println("The current working directory is " + currentDirectory);
         new App().run(args);

@@ -55,7 +55,6 @@ public class ExecutionThread extends Thread {
         return sortedMap;
     }
 
-    // post of the district
     public void putToDirectory() {
         // Fazer o put
         try {

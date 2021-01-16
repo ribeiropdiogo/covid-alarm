@@ -24,14 +24,13 @@ public class DefaultResource implements ResourceInterface {
         List<District> result = new ArrayList<>();
         try {
             result = Data.allDistricts();
-            if (result.isEmpty()) {
-                return Response.status(Response.Status.NOT_FOUND).build();
+            if (!result.isEmpty()) {
+                return Response.ok(result).build();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return Response.ok(result).build();
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @GET
@@ -42,14 +41,13 @@ public class DefaultResource implements ResourceInterface {
         Integer result = 0;
         try {
             result = Data.getUsersPerDistrict(districtName);
-            if (result == 0 ){
-                return Response.status(Response.Status.NOT_FOUND).build();
+            if (result != 0 ){
+                return Response.ok(result).build();
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-
-        return Response.ok(result).build();
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
 
@@ -61,14 +59,13 @@ public class DefaultResource implements ResourceInterface {
         Integer result = 0;
         try {
             result = Data.getInfectedPerDistrict(districtName);
-            if (result == 0 ){
-                return Response.status(Response.Status.NOT_FOUND).build();
+            if (result != 0 ){
+                return Response.ok(result).build();
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-
-        return Response.ok(result).build();
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @GET
@@ -76,26 +73,16 @@ public class DefaultResource implements ResourceInterface {
     @Path("/getRacioMostInfected")
     @Override
     public Response getMostInfected(){
-        List<District> result = new ArrayList<>();
-        Map<String, Float> racio = new HashMap<>();
+        Map<String, Float> result = new HashMap<>();
         try {
             result = Data.getRacioMostInfected();
-            if (result.isEmpty()){
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            else {
-                for (District d : result) {
-                    float value = ((float)d.getTotalInfected() / (float)d.getTotalUsers());
-                    racio.put(d.getName(), value);
-                }
-                racio = racio.entrySet().stream().limit(5).collect(Collectors.toMap(e -> e.getKey(),
-                        e -> e.getValue()));
+            if (!result.isEmpty()){
+                return Response.ok(result).build();
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-
-        return Response.ok(result).build();
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @GET
@@ -106,14 +93,13 @@ public class DefaultResource implements ResourceInterface {
         List<String> result = new ArrayList<>();
         try {
             result = Data.top5CrowdedLocation();
-            if (result.isEmpty() ){
-                return Response.status(Response.Status.NOT_FOUND).build();
+            if (!result.isEmpty() ){
+                return Response.ok(result).build();
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-
-        return Response.ok(result).build();
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @GET
@@ -124,26 +110,26 @@ public class DefaultResource implements ResourceInterface {
         float result = 0;
         try {
             result = Data.meanMeetInfected();
-            if (result == 0 ){
-                return Response.status(Response.Status.NOT_FOUND).build();
+            if (result != 0 ){
+                return Response.ok(result).build();
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-
-        return Response.ok(result).build();
+        return Response.status(Response.Status.NOT_FOUND).build();
     }
 
 
     /*
-    Keep in mind that no validation is performed. If none of the fields in the request body match the
-    fields in the District class, a new instance of District will still be created but all of its instance
-    fields will be null.
-     */
-    @POST
+  To update an existing district, we’re going to use the HTTP PUT method. PUT is an idempotent method
+  which means that executing the same request multiple times does not create additional state on
+  the server. As with retrieving a single district, we’re going to need to read the district's name
+  from the path using the @PathParam annotation.
+   */
+    @PUT
     @Path("/district/{name}")
     @Override
-    public Response post(@PathParam("name") String name, District district) {
+    public Response put(@PathParam("name") String name, District district) {
         District d = new District();
 
         try {
@@ -165,7 +151,6 @@ public class DefaultResource implements ResourceInterface {
         return Response.ok(Response.Status.NOT_FOUND).build();
     }
 
-
     @DELETE
     @Path("/delete/{name}")
     @Override
@@ -173,25 +158,23 @@ public class DefaultResource implements ResourceInterface {
         try {
             synchronized (this) {
                 Data.removeDistrict(name);
+                return Response.ok().build();
             }
         }catch (Exception e) {
             e.printStackTrace();
         }
-        return Response.ok().build();
+        return Response.ok(Response.Status.NOT_FOUND).build();
     }
 
-
     /*
-    To update an existing district, we’re going to use the HTTP PUT method. PUT is an idempotent method
-    which means that executing the same request multiple times does not create additional state on
-    the server. As with retrieving a single district, we’re going to need to read the district's name
-    from the path using the @PathParam annotation.
+    Keep in mind that no validation is performed. If none of the fields in the request body match the
+    fields in the District class, a new instance of District will still be created but all of its instance
+    fields will be null.
      */
-    @PUT
+    @POST
     @Path("/district/{name}")
     @Override
-    public Response put(@PathParam("name") String name, District district) {
-
+    public Response post(@PathParam("name") String name, District district) {
         try {
             synchronized (this) {
                 if(district == null)
@@ -199,7 +182,7 @@ public class DefaultResource implements ResourceInterface {
                 if(name == null)
                     return Response.status(400).entity("Please provide the District name !!").build();
 
-                System.out.println("Olá fiz um put de: " + district);
+                System.out.println("Olá fiz um post de: " + district);
 
                 District d = Data.addDistrict(district);
 

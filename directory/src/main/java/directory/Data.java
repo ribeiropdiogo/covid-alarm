@@ -8,87 +8,18 @@ import java.util.stream.Collectors;
 public class Data {
     private static List<District> infoPerDistrict = new ArrayList<>();
 
-    static {
-
-        Map<String, Integer> locationsBraga = new HashMap<String, Integer>();
-        locationsBraga.put("Guimaraes", 100);
-        locationsBraga.put("Braga", 160);
-        locationsBraga.put("Vizela", 17);
-        locationsBraga.put("VilaVerde", 30);
-        locationsBraga.put("Barcelos", 34);
-        locationsBraga.put("PovoaLanhoso", 34);
-
-        Map<String, Integer> locationsLisboa = new HashMap<String, Integer>();
-        locationsLisboa.put("Oeiras", 115);
-        locationsLisboa.put("Lisboa", 400);
-        locationsLisboa.put("Cascais", 200);
-        locationsLisboa.put("Loures", 300);
-        locationsLisboa.put("Amadora", 45);
-        locationsLisboa.put("Odivelas", 45);
-        locationsLisboa.put("Sintra", 65);
-        locationsLisboa.put("Mafra", 80);
-
-
-
-        Map<String, Integer> locationsPorto = new HashMap<String, Integer>();
-        locationsPorto.put("Porto", 350);
-        locationsPorto.put("StoTirso", 10);
-        locationsPorto.put("Gaia", 17);
-        locationsPorto.put("Maia", 30);
-        locationsPorto.put("Matosinhos", 45);
-        locationsPorto.put("Gondomar", 45);
-
-
-        Map<String, Integer> locationsAveiro = new HashMap<String, Integer>();
-        locationsAveiro.put("Agueda", 150);
-        locationsAveiro.put("Ovar", 100);
-        locationsAveiro.put("Espinho", 127);
-        locationsAveiro.put("Aveiro", 90);
-        locationsAveiro.put("Estarreja", 45);
-
-        Map<String, Integer> locationsLeiria = new HashMap<String, Integer>();
-        locationsLeiria.put("Leiria", 90);
-        locationsLeiria.put("Ansiao", 100);
-        locationsLeiria.put("Batalha", 127);
-        locationsLeiria.put("Alcobaca", 90);
-        locationsLeiria.put("Peniche", 45);
-        locationsLeiria.put("Obidos", 30);
-
-        Map<String, Integer> locationsCoimbra = new HashMap<String, Integer>();
-        locationsCoimbra.put("Coimbra", 75);
-        locationsCoimbra.put("Penacova", 50);
-        locationsCoimbra.put("Mira", 17);
-        locationsCoimbra.put("Penela", 29);
-        locationsCoimbra.put("Soure", 35);
-
-
-        District d1 = new District("Lisboa", 1000, 500,600, locationsLisboa);
-        District d3 = new District("Porto", 1000, 400,234, locationsPorto);
-        District d4 = new District("Aveiro", 1000, 350,209, locationsAveiro);
-        District d5 = new District("Leiria", 1000, 450,202, locationsLeiria);
-        District d6 = new District("Coimbra", 1000, 200,200, locationsCoimbra);
-        District d2 = new District("Braga", 1000, 300,200, locationsBraga);
-
-        infoPerDistrict.add(d1);
-        infoPerDistrict.add(d2);
-        infoPerDistrict.add(d3);
-        infoPerDistrict.add(d4);
-        infoPerDistrict.add(d5);
-        infoPerDistrict.add(d6);
-
-    }
-
 
     //Adds a district into the districts' list if it doesn't exists
     public static District addDistrict(District district){
         for(District d: infoPerDistrict) {
             if(d.getName().equals(district.getName())){
                 System.out.println("District already exists");
-                return null;
+                return district;
             }
         }
 
         infoPerDistrict.add(district);
+
         return district;
     }
 
@@ -112,12 +43,14 @@ public class Data {
     }
 
     //Removes a district
-    public static void removeDistrict(String name){
+    public static boolean removeDistrict(String name){
         for(District d: infoPerDistrict) {
             if (d.getName().equals(name)) {
                 infoPerDistrict.remove(d);
+                return true;
             }
         }
+        return false;
     }
 
     //Retrieves the number users by district
@@ -130,7 +63,6 @@ public class Data {
                 return result;
             }
         }
-
         return result;
     }
 
@@ -154,38 +86,37 @@ public class Data {
         return res;
     }
 
-    //Collects the 5 Districts that have the higher ratio between infected and totalUsers
-    public static List<District> getRacioMostInfected() {
-        Map<District, Float> top5 = new HashMap<District, Float>();
+    public static Map<String, Float> getRacioMostInfected(List<District> info) {
+        Map<String, Float> top5 = new HashMap<String, Float>();
         float racio = 0;
 
-        for(District district : infoPerDistrict) {
+        for(District district : info) {
             racio = racioInfectedUsers(district);
-            top5.put(district, racio);
+            top5.put(district.getName(), racio);
         }
 
-
-
         return top5.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .limit(5).map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+                .limit(5).collect(Collectors.toMap(e-> e.getKey(), e->e.getValue()));
+    }
 
+    //Collects the 5 Districts that have the higher ratio between infected and totalUsers
+    public static Map<String, Float> getRacioMostInfected() {
+        return getRacioMostInfected(infoPerDistrict);
     }
 
     //Collects the name of the 5 locations with more people together at the same time
-    public static List<String> top5CrowdedLocation(){
+    public static List<String> top5CrowdedLocation(List<District> info){
         List<Map.Entry<String, Integer>> top5Locations = new ArrayList<>();
 
         List<Map.Entry<String, Integer>> top5LocationsPerRegion = new ArrayList<>();
 
-        for(District district : infoPerDistrict) {
+        for(District district : info) {
             top5LocationsPerRegion = district.getUsersPerLocation().entrySet().stream().
                     sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                     .limit(5)
                     .collect(Collectors.toList());
             top5Locations.addAll(top5LocationsPerRegion);
         }
-
 
         return top5Locations.stream()
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -195,16 +126,22 @@ public class Data {
     }
 
 
+    public static List<String> top5CrowdedLocation(){
+        return top5CrowdedLocation(infoPerDistrict);
+    }
 
-    public static float meanMeetInfected(){
+    public static float meanMeetInfected(List<District> info){
         float totalUsers = 0;
         float totalMeetInfected = 0;
 
-        for(District district : infoPerDistrict) {
+        for(District district : info) {
             totalUsers += (float)district.getTotalUsers();
             totalMeetInfected += (float)district.getMeetInfected();
         }
-
         return (totalMeetInfected/totalUsers);
+    }
+
+    public static float meanMeetInfected(){
+        return meanMeetInfected(infoPerDistrict);
     }
 }
