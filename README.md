@@ -14,8 +14,8 @@ Primeiro pedido depois de estabelecer a ligação (ou depois de fazer log out):
 
 | Pedido | Sintaxe | Resultado |
 | --- | --- | --- |
-| create account | `"ca <username> <password> <nº distrito> <locationX> <locationY>"` | <code>"ok" &#124; "error user_exists"</code> |
-| login | `"li <username> <password>"` | <code>"ok" &#124; "error already_logged_in" &#124; "error invalid"</code> |
+| create account | `"ca <username> <password> <nº distrito> <locationX> <locationY>"` | <code>"ok &lt;nº distrito&gt; &lt;id&gt;" &#124; "error user_exists"</code> |
+| login | `"li <username> <password>"` | <code>"ok &lt;nº distrito&gt; &lt;id&gt;" &#124; "error already_logged_in" &#124; "error invalid"</code> |
 | \<outro\> | - | `"error invalid_request"` |
 
 Restantes pedidos:

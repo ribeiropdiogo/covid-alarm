@@ -22,7 +22,7 @@ loop(Accounts) ->
         {{login, Username, Password}, From} ->
             case maps:find(Username, Accounts) of
                 {ok, {ID, Password, DistNum, false}} ->
-                    From ! {{ok, ID, DistNum}, ?MODULE},
+                    From ! {{ok, DistNum, ID}, ?MODULE},
                     loop(maps:update(Username, {ID, Password, DistNum, true}, Accounts));
                 {ok, {_, Password, _, true}} ->
                     From ! {already_logged_in, ?MODULE},
