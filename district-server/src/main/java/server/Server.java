@@ -27,7 +27,7 @@ public class Server {
         System.out.println("> Distric Server '" + options.dName + "' started with number " + options.dNumber);
 
         // Criar as Threads para notificações públicas e privadas
-        PublicThread pubThread = new PublicThread(options.dName, options.dNumber);
+        PublicThread pubThread = new PublicThread(options.dNumber);
         PrivateThread privThread = new PrivateThread(options.dNumber);
         pubThread.start();
         privThread.start();

@@ -9,16 +9,15 @@ import java.util.Queue;
 
 public class PublicThread extends Thread {
 
-    private final String distName, distNum;
+    private final String distNum;
     private final Queue<String> queue;
 
-    public PublicThread(String name, int n) {
-        this.distName = name;
+    public PublicThread(int n) {
         this.distNum = String.format("%02d", n);
         this.queue = new LinkedList<>();
     }
 
-    public void sendMessage(String msg){
+    public void sendMessage(String msg) {
         queue.add(msg);
     }
 
@@ -26,10 +25,10 @@ public class PublicThread extends Thread {
         try (ZContext context = new ZContext();
              ZMQ.Socket socket = context.createSocket(SocketType.PUB))
         {
-            socket.bind("tcp://*:7"+distNum+"2");
+            socket.bind("tcp://*:7" + distNum + "2");
             while (true) {
                 if (!queue.isEmpty())
-                    socket.send(distName + "_" + queue.remove());
+                    socket.send(distNum + " " + queue.remove());
                 Thread.sleep(500);
             }
         } catch (InterruptedException e) {
