@@ -3,20 +3,17 @@ package client;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
+import org.zeromq.ZMQException;
 
 
-public class NotificationsThread extends Thread {
+public class PrivNotificationsThread extends Thread {
 
     private final ZMQ.Socket socket;
 
 
-    public NotificationsThread() {
+    public PrivNotificationsThread() {
         socket = new ZContext().createSocket(SocketType.SUB);
         socket.connect("tcp://localhost:8002");
-    }
-
-    public void close() {
-        socket.close();
     }
 
     public void subscribe(int distNum, int userID) {
@@ -31,8 +28,12 @@ public class NotificationsThread extends Thread {
     public void run() {
         try {
             while (true) {
-                String msg = socket.recvStr().split(" ", 3)[2];
-                System.out.println("[!] " + msg);
+                try {
+                    String msg = socket.recvStr().split(" ", 3)[2];
+                    System.out.println("[!] " + msg);
+                } catch (ZMQException e) {
+                    break;
+                }
             }
         } finally {
             socket.close();

@@ -11,6 +11,9 @@ parse(Args) -> parse(Args, [], "").
 parse("", List, Elem) ->
     List ++ [Elem];
 
+parse([$\r|Args], List, Elem) ->
+    parse(Args, List, Elem);
+
 parse([$\n|Args], List, Elem) ->
     parse(Args, List, Elem);
 

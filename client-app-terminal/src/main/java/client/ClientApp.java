@@ -13,7 +13,7 @@ import java.io.InputStreamReader;
 public class ClientApp {
 
     private static FrontendServer frontend;
-    private static NotificationsThread notifications;
+    private static PrivNotificationsThread privNotifications;
     private static BufferedReader stdin;
 
     private static final String QUIT = "/quit";
@@ -22,15 +22,16 @@ public class ClientApp {
     public static void main(String[] args) throws IOException {
         try {
             frontend = new FrontendServer();
-            notifications = new NotificationsThread();
+            privNotifications = new PrivNotificationsThread();
             stdin = new BufferedReader(new InputStreamReader(System.in));
 
-            notifications.start();
+            privNotifications.start();
 
             mainMenu();
+
         } finally {
-            frontend.close();
-            notifications.close();
+            if (frontend != null) frontend.close();
+            if (privNotifications != null) privNotifications.interrupt();
         }
     }
 
@@ -77,9 +78,9 @@ public class ClientApp {
                 String[] res = frontend.login(username, password).split(" ");
                 int distNum = Integer.parseInt(res[0]);
                 int userID = Integer.parseInt(res[1]);
-                notifications.subscribe(distNum, userID);
+                privNotifications.subscribe(distNum, userID);
                 userMenu();
-                notifications.unsubscribe(distNum, userID);
+                privNotifications.unsubscribe(distNum, userID);
                 return;
             } catch (AlreadyLoggedInException | InvalidParametersException e) {
                 System.out.println(e.getMessage());
@@ -139,9 +140,9 @@ public class ClientApp {
             try {
                 String[] res = frontend.createAccount(username, password, distNum, locX, locY).split(" ");
                 int userID = Integer.parseInt(res[1]);
-                notifications.subscribe(distNum, userID);
+                privNotifications.subscribe(distNum, userID);
                 userMenu();
-                notifications.unsubscribe(distNum, userID);
+                privNotifications.unsubscribe(distNum, userID);
                 return;
             } catch (UserExistsException e) {
                 System.out.println(e.getMessage());
