@@ -32,9 +32,9 @@ public class ExecutionThread extends Thread {
         this.distName = distName;
         this.distNum = String.format("%02d", distNum);
         this.gridSize = gridSize;
-        this.nUsers = 100;
-        this.nInfected = 10;
-        this.contacts = 3;
+        this.nUsers = 0;
+        this.nInfected = 0;
+        this.contacts = 0;
         this.usersByLocation = new HashMap<>();
         this.numberOfUsersByLocation = new HashMap<>();
 
@@ -44,13 +44,6 @@ public class ExecutionThread extends Thread {
                 this.usersByLocation.put(i + "-" + j, new HashSet<>());
                 this.numberOfUsersByLocation.put(i + "-" + j, 0);
             }
-
-        this.numberOfUsersByLocation.put("2-3",10);
-        this.numberOfUsersByLocation.put("2-1",7);
-        this.numberOfUsersByLocation.put("3-3",2);
-        this.numberOfUsersByLocation.put("7-3",6);
-        this.numberOfUsersByLocation.put("1-3",11);
-        this.numberOfUsersByLocation.put("2-6",18);
 
         this.users = new HashMap<>();
     }

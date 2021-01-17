@@ -1,7 +1,6 @@
 package client;
 
 import client.exceptions.InvalidDistrictException;
-import javafx.util.Pair;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
