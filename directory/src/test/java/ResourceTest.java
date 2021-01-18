@@ -1,4 +1,6 @@
+import common.Crowded;
 import common.District;
+import common.InfectedRatio;
 import directory.Data;
 import org.junit.Test;
 
@@ -79,14 +81,14 @@ public class ResourceTest {
 
     @Test
     public void getRacioMostInfectedTest() {
-        Map<String, Float> res = Data.getRacioMostInfected(infoPerDistrict);
-        Map<String, Float> expect = new HashMap<>();
+        List<InfectedRatio> res = Data.getRacioMostInfected(infoPerDistrict);
+        List<InfectedRatio> expect = new ArrayList<>();
 
-        expect.put("Lisboa", 0.5f);
-        expect.put("Leiria", 0.45f);
-        expect.put("Porto", 0.4f);
-        expect.put("Aveiro", 0.35f);
-        expect.put("Braga", 0.3f);
+        expect.add( new InfectedRatio("Lisboa", 0.5f));
+        expect.add( new InfectedRatio("Leiria", 0.45f));
+        expect.add( new InfectedRatio("Porto", 0.4f));
+        expect.add( new InfectedRatio("Aveiro", 0.35f));
+        expect.add( new InfectedRatio("Braga", 0.3f));
 
         // assert statements
         assertEquals("Os distritos com maior rácio de infectados são:", expect, res);
@@ -94,14 +96,14 @@ public class ResourceTest {
 
     @Test
     public void getTopCrowdedTest() {
-        List<String> res = Data.top5CrowdedLocation(infoPerDistrict);
-        List<String> expect = new ArrayList<>();
+        List<Crowded> res = Data.top5CrowdedLocation(infoPerDistrict);
+        List<Crowded> expect = new ArrayList<>();
 
-        expect.add("Lisboa");
-        expect.add("Porto");
-        expect.add("Loures");
-        expect.add("Cascais");
-        expect.add("Braga");
+        expect.add (new Crowded("Lisboa", 400));
+        expect.add (new Crowded("Porto", 350));
+        expect.add(new Crowded("Loures", 300));
+        expect.add (new Crowded("Cascais", 200));
+        expect.add (new Crowded("Braga", 160));
 
         // assert statements
         assertEquals("Os locais com mais pessoas simultaneamente são:", expect, res);

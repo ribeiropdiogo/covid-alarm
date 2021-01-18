@@ -1,6 +1,8 @@
 package directory;
 
+import common.Crowded;
 import common.District;
+import common.InfectedRatio;
 import common.ResourceInterface;
 
 import com.codahale.metrics.annotation.Timed;
@@ -83,7 +85,7 @@ public class DefaultResource implements ResourceInterface {
     @Path("/getRacioMostInfected")
     @Override
     public Response getMostInfected(){
-        Map<String, Float> result = new HashMap<>();
+        List<InfectedRatio> result = new ArrayList<>();
         try {
             result = Data.getRacioMostInfected();
             if (!result.isEmpty()){
@@ -103,7 +105,7 @@ public class DefaultResource implements ResourceInterface {
     @Path("/getMostCrowded")
     @Override
     public Response getMostCrowded() {
-        List<String> result = new ArrayList<>();
+        List<Crowded> result = new ArrayList<>();
         try {
             result = Data.top5CrowdedLocation();
             if (!result.isEmpty() ){

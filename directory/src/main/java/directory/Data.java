@@ -1,6 +1,8 @@
 package directory;
 
+import common.Crowded;
 import common.District;
+import common.InfectedRatio;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -86,47 +88,50 @@ public class Data {
         return res;
     }
 
-    public static Map<String, Float> getRacioMostInfected(List<District> info) {
-        Map<String, Float> top5 = new HashMap<String, Float>();
+    public static List<InfectedRatio> getRacioMostInfected(List<District> info) {
+        List<InfectedRatio> top5 = new ArrayList<>();
         float racio = 0;
 
         for(District district : info) {
             racio = racioInfectedUsers(district);
-            top5.put(district.getName(), racio);
+            InfectedRatio i = new InfectedRatio(district.getName(), racio);
+            top5.add(i);
         }
 
-        return top5.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
-                .limit(5).collect(Collectors.toMap(e-> e.getKey(), e->e.getValue()));
+        return top5.stream()
+                .sorted(Comparator.comparingDouble(InfectedRatio::getRatio).reversed())
+                .limit(5)
+                .collect(Collectors.toList());
     }
 
     //Collects the 5 Districts that have the higher ratio between infected and totalUsers
-    public static Map<String, Float> getRacioMostInfected() {
+    public static List<InfectedRatio> getRacioMostInfected() {
         return getRacioMostInfected(infoPerDistrict);
     }
 
     //Collects the name of the 5 locations with more people together at the same time
-    public static List<String> top5CrowdedLocation(List<District> info){
-        List<Map.Entry<String, Integer>> top5Locations = new ArrayList<>();
+    public static List<Crowded> top5CrowdedLocation(List<District> info){
+        List<Crowded> top5Locations = new ArrayList<>();
 
-        List<Map.Entry<String, Integer>> top5LocationsPerRegion = new ArrayList<>();
+        List<Crowded> top5LocationsPerRegion = new ArrayList<>();
 
         for(District district : info) {
             top5LocationsPerRegion = district.getUsersPerLocation().entrySet().stream().
                     sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                     .limit(5)
+                    .map(e -> new Crowded(e.getKey(), e.getValue()))
                     .collect(Collectors.toList());
             top5Locations.addAll(top5LocationsPerRegion);
         }
 
         return top5Locations.stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                .sorted(Comparator.comparingInt(Crowded::getNUsers).reversed())
                 .limit(5)
-                .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
     }
 
     //Returns the names of the top 5 locations more crowded
-    public static List<String> top5CrowdedLocation(){
+    public static List<Crowded> top5CrowdedLocation(){
         return top5CrowdedLocation(infoPerDistrict);
     }
 
