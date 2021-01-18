@@ -34,9 +34,8 @@ public class PubNotificationsThread extends Thread {
         try {
           String[] message = socket.recvStr().split(" ", 2);
           int district = Integer.parseInt(message[0]);
-          System.out.println(message[0] + message[1]);
-          String msg = message[1];
-          controller.newWarning(decodeDistrict(district) + ": " + msg);
+          System.out.println("[" + message[0] + "] " + message[1]);
+          controller.newWarning(decodeDistrict(district) + ": " + message[1]);
         } catch (ZMQException e) {
           break;
         }
