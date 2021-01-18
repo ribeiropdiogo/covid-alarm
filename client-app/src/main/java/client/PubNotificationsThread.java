@@ -15,16 +15,16 @@ public class PubNotificationsThread extends Thread {
   public PubNotificationsThread(Controller controller) {
     socket = new ZContext().createSocket(SocketType.SUB);
     for (int i = 1; i <= 18; ++i)
-      socket.connect("tcp://localhost:7" + String.format("%02d", i) + "3");
+      socket.connect("tcp://localhost:7" + String.format("%02d", i) + "2");
     this.controller = controller;
   }
 
   public void subscribe(int distNum) {
-    socket.subscribe(String.format("%02d", distNum));
+    socket.subscribe(String.format("%02d ", distNum));
   }
 
   public void unsubscribe(int distNum) {
-    socket.unsubscribe(String.format("%02d", distNum));
+    socket.unsubscribe(String.format("%02d ", distNum));
   }
 
   @Override
@@ -32,8 +32,9 @@ public class PubNotificationsThread extends Thread {
     try {
       while (true) {
         try {
-          String[] message = socket.recvStr().split(" ", 1);
+          String[] message = socket.recvStr().split(" ", 2);
           int district = Integer.parseInt(message[0]);
+          System.out.println(message[0] + message[1]);
           String msg = message[1];
           controller.newWarning(decodeDistrict(district) + ": " + msg);
         } catch (ZMQException e) {

@@ -32,6 +32,7 @@ public class PrivNotificationsThread extends Thread {
             while (true) {
                 try {
                     String msg = socket.recvStr().split(" ", 3)[2];
+                    System.out.println("[!] " + msg);
                     controller.newWarning("[!] " + msg);
                 } catch (ZMQException e) {
                     break;

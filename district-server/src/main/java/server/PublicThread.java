@@ -27,8 +27,11 @@ public class PublicThread extends Thread {
         {
             socket.bind("tcp://*:7" + distNum + "2");
             while (true) {
-                if (!queue.isEmpty())
-                    socket.send(distNum + " " + queue.remove());
+                if (!queue.isEmpty()){
+                    String s = distNum + " " + queue.remove();
+                    System.out.println(s);
+                    socket.send(s);
+                }
                 Thread.sleep(500);
             }
         } catch (InterruptedException e) {
