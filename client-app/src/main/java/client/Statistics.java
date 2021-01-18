@@ -141,12 +141,12 @@ public class Statistics {
 
   public static String[] getRacioList() throws IOException {
     HttpURLConnection conn = makeRequest("/getRacioMostInfected");
-    JSONObject resJSON = new JSONObject(inputStreamToString(conn.getInputStream()));
-    Iterator<String> keys = resJSON.keys();
+    JSONArray resJSON = new JSONArray(inputStreamToString(conn.getInputStream()));
     String[] output = new String[resJSON.length()];
+    JSONObject object;
     for (int i = 0; i < resJSON.length() ; i++) {
-      String key = keys.next();
-      output[i] = districtNameDecoder(key) + ": " + resJSON.get(key);
+      object = resJSON.getJSONObject(i);
+      output[i] = districtNameDecoder(object.getString("nameLocation")) + ": " + object.getFloat("ratio");
     }
     return output;
   }
@@ -155,8 +155,10 @@ public class Statistics {
     HttpURLConnection conn = makeRequest("/getMostCrowded");
     JSONArray resJSON = new JSONArray(inputStreamToString(conn.getInputStream()));
     String[] output = new String[resJSON.length()];
+    JSONObject object;
     for (int i = 0; i < resJSON.length() ; i++) {
-      output[i] = (String) resJSON.get(i);
+      object = resJSON.getJSONObject(i);
+      output[i] = "Location: " + object.getString("nameLocation") + " | nº: " + object.getInt("nusers");
     }
     return output;
   }

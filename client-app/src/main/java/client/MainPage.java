@@ -27,13 +27,18 @@ public class MainPage {
   private JLabel selectLocationError;
   private JLabel infectedResult;
   private JButton statsButton;
+  private JComboBox comboBox1;
+  private JButton subscreverButton;
+  private JLabel subscribeMessage;
+  private JButton logoutButton;
   private JTable locationTable;
 
-  public MainPage(ActionListener selectLocation, ActionListener updateLocation, ActionListener stats, ActionListener addInfected) {
+  public MainPage(ActionListener selectLocation, ActionListener updateLocation, ActionListener stats, ActionListener addInfected, ActionListener logout) {
     selectLocationButton.addActionListener(selectLocation);
     updateLocationButton.addActionListener(updateLocation);
     statsButton.addActionListener(stats);
     infectedButton.addActionListener(addInfected);
+    logoutButton.addActionListener(logout);
   }
 
   public void start() {

@@ -70,7 +70,6 @@ public class Controller {
       this.username = username;
       notifications.subscribe(district, userID);
       mainPageStart();
-      notifications.unsubscribe(district, userID);
     } catch (AlreadyLoggedInException | InvalidParametersException | IOException | NullPointerException e) {
       loginPage.setLoginError("Inválido");
     }
@@ -93,7 +92,6 @@ public class Controller {
       this.username = username;
       notifications.subscribe(district, userID);
       mainPageStart();
-      notifications.unsubscribe(district, userID);
     } catch (UserExistsException | DifferentPasswordsException | InvalidDistrictException | InvalidParametersException | IOException e) {
       loginPage.setRegisterError(e.getMessage());
     }
@@ -158,6 +156,18 @@ public class Controller {
           } catch (IOException | NoUserException e) {
             mainPage.setInfectedResult("ERRO: não enviado");
           }
+        }
+      },
+      // Logout
+      new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+          notifications.unsubscribe(district, userID);
+          frontend.close();
+          mainPage.quit();
+          // restart
+          Controller controller = new Controller();
+          controller.start();
         }
       }
     );
