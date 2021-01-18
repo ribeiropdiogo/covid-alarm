@@ -27,17 +27,18 @@ public class MainPage {
   private JLabel selectLocationError;
   private JLabel infectedResult;
   private JButton statsButton;
-  private JComboBox comboBox1;
-  private JButton subscreverButton;
+  private JComboBox districtNotificationSelector;
+  private JButton subscribeButton;
   private JLabel subscribeMessage;
   private JButton logoutButton;
   private JTable locationTable;
 
-  public MainPage(ActionListener selectLocation, ActionListener updateLocation, ActionListener stats, ActionListener addInfected, ActionListener logout) {
+  public MainPage(ActionListener selectLocation, ActionListener updateLocation, ActionListener stats, ActionListener addInfected, ActionListener subscribe, ActionListener logout) {
     selectLocationButton.addActionListener(selectLocation);
     updateLocationButton.addActionListener(updateLocation);
     statsButton.addActionListener(stats);
     infectedButton.addActionListener(addInfected);
+    subscribeButton.addActionListener(subscribe);
     logoutButton.addActionListener(logout);
   }
 
@@ -148,6 +149,15 @@ public class MainPage {
 
   public void setInfectedResult(String msg) {
     this.infectedResult.setText(msg);
+  }
+
+
+  public void setNotificationSubscriberMessage(String message){
+    subscribeMessage.setText(message);
+  }
+
+  public String getSelectedNotificationDistrict(){
+    return districtNotificationSelector.getSelectedItem().toString();
   }
 
 

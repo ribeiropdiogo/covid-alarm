@@ -2,7 +2,7 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="client.MainPage">
   <grid id="27dc6" binding="panel" layout-manager="GridBagLayout">
     <constraints>
-      <xy x="20" y="20" width="1037" height="668"/>
+      <xy x="20" y="20" width="1037" height="713"/>
     </constraints>
     <properties/>
     <border type="empty">
@@ -206,7 +206,7 @@
               <gridbag weightx="0.0" weighty="0.0"/>
             </constraints>
           </vspacer>
-          <component id="72c9c" class="javax.swing.JComboBox" binding="comboBox1" default-binding="true">
+          <component id="72c9c" class="javax.swing.JComboBox" binding="districtNotificationSelector">
             <constraints>
               <grid row="13" column="0" row-span="1" col-span="5" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
               <gridbag weightx="0.0" weighty="0.0"/>
@@ -234,7 +234,7 @@
               </model>
             </properties>
           </component>
-          <component id="8b621" class="javax.swing.JButton" binding="subscreverButton" default-binding="true">
+          <component id="8b621" class="javax.swing.JButton" binding="subscribeButton">
             <constraints>
               <grid row="13" column="8" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
               <gridbag weightx="0.0" weighty="0.0"/>

@@ -5,12 +5,15 @@ import client.exceptions.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Controller {
 
   private static final String QUIT = "/quit";
   private static FrontendServer frontend;
-  private static PrivNotificationsThread notifications;
+  private PrivNotificationsThread privNotifications;
+  private PubNotificationsThread pubNotifications;
+  private boolean districtsSubscribed[];
   private Login loginPage;
   private MainPage mainPage;
   private LocationDialog locationDialog;
@@ -24,7 +27,9 @@ public class Controller {
     locX = locY = -1;
     try {
       frontend = new FrontendServer();
-      notifications = new PrivNotificationsThread(this);
+      privNotifications = new PrivNotificationsThread(this);
+      pubNotifications = new PubNotificationsThread(this);
+      districtsSubscribed = new boolean[20];
       this.loginPage = new Login(
         new ActionListener() {
           @Override
@@ -55,8 +60,6 @@ public class Controller {
       loginPage.start();
     } catch (IOException e) {
       System.out.println("Ocorreu um erro inesperado na ligação com o servidor de frontend");
-    } finally {
-      //frontend.close();
     }
   }
 
@@ -68,7 +71,6 @@ public class Controller {
       this.district = Integer.parseInt(res[0]);
       this.userID = Integer.parseInt(res[1]);
       this.username = username;
-      notifications.subscribe(district, userID);
       mainPageStart();
     } catch (AlreadyLoggedInException | InvalidParametersException | IOException | NullPointerException e) {
       loginPage.setLoginError("Inválido");
@@ -90,7 +92,6 @@ public class Controller {
       this.userID = Integer.parseInt(res[1]);
       this.district = district;
       this.username = username;
-      notifications.subscribe(district, userID);
       mainPageStart();
     } catch (UserExistsException | DifferentPasswordsException | InvalidDistrictException | InvalidParametersException | IOException e) {
       loginPage.setRegisterError(e.getMessage());
@@ -158,11 +159,19 @@ public class Controller {
           }
         }
       },
+      // Subscribe
+      new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+          subscribeToDistrict(mainPage.getSelectedNotificationDistrict());
+        }
+      },
       // Logout
       new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
-          notifications.unsubscribe(district, userID);
+          privNotifications.unsubscribe(district, userID);
+          unsubscribeAllDistricts();
           frontend.close();
           mainPage.quit();
           // restart
@@ -173,15 +182,74 @@ public class Controller {
     );
     mainPage.setName(this.username);
     mainPage.setDistrict(this.district);
+    privNotifications.subscribe(district, userID);
+    privNotifications.start();
+    pubNotifications.start();
     mainPage.start();
   }
 
-  private void updateStatistics(){
-//    statisticsDialog.addNUserDistrictSelectorListener();
-  }
 
   public void newWarning(String warning) {
     mainPage.setWarning(warning);
+  }
+
+  private void subscribeToDistrict(String districtString){
+    int district = encodeDistrict(districtString);
+    pubNotifications.subscribe(district);
+    districtsSubscribed[district] = true;
+    mainPage.setNotificationSubscriberMessage("Subscrito.");
+  }
+
+  private void unsubscribeAllDistricts(){
+    for (int i = 0; i < districtsSubscribed.length; i++) {
+      if (districtsSubscribed[i]){
+        pubNotifications.unsubscribe(i);
+        districtsSubscribed[i] = false;
+      }
+    }
+  }
+
+  public int encodeDistrict(String district) {
+    switch (district) {
+      case "Aveiro":
+        return 1;
+      case "Beja":
+        return 2;
+      case "Braga":
+        return 3;
+      case "Bragança":
+        return 4;
+      case "Castelo Branco":
+        return 5;
+      case "Coimbra":
+        return 6;
+      case "Évora":
+        return 7;
+      case "Faro":
+        return 8;
+      case "Guarda":
+        return 9;
+      case "Leiria":
+        return 10;
+      case "Lisboa":
+        return 11;
+      case "Portalegre":
+        return 12;
+      case "Porto":
+        return 13;
+      case "Santarém":
+        return 14;
+      case "Setúbal":
+        return 15;
+      case "Viana do Castelo":
+        return 16;
+      case "Vila Real":
+        return 17;
+      case "Viseu":
+        return 18;
+      default:
+        return 0;
+    }
   }
 
 
