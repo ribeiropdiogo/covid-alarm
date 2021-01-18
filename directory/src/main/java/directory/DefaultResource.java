@@ -128,9 +128,7 @@ public class DefaultResource implements ResourceInterface {
         float result = 0;
         try {
             result = Data.meanMeetInfected();
-            if (result >= 0 ){
-                return Response.ok(result).build();
-            }
+            return Response.ok(result).build();
         }catch (Exception e){
             e.printStackTrace();
         }

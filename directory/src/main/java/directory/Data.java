@@ -84,7 +84,9 @@ public class Data {
 
     //Calculates the racio between totalInfected/allUsers by district
     private static float racioInfectedUsers(District district) {
-        float res = ((float)district.getTotalInfected()/(float)district.getTotalUsers());
+        float res = 0;
+        if (district.getTotalUsers() > 0)
+            res = ((float)district.getTotalInfected()/(float)district.getTotalUsers());
         return res;
     }
 
@@ -144,7 +146,11 @@ public class Data {
             totalUsers += (float)district.getTotalUsers();
             totalMeetInfected += (float)district.getMeetInfected();
         }
-        return (totalMeetInfected/totalUsers);
+
+        if (totalUsers == 0)
+            return 0;
+        else
+            return (totalMeetInfected/totalUsers);
     }
 
     //mean of users that have been together at the same location
