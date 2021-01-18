@@ -13,7 +13,8 @@ public class Controller {
   private static PrivNotificationsThread notifications;
   private Login loginPage;
   private MainPage mainPage;
-  private LocationDialog dialog;
+  private LocationDialog locationDialog;
+  private StatisticsDialog statisticsDialog;
   private String username;
   private int userID;
   private int district;
@@ -41,22 +42,20 @@ public class Controller {
           @Override
           public void actionPerformed(ActionEvent actionEvent) {
             // Open select location dialog window
-            dialog = new LocationDialog(e -> {
-              locX = dialog.getLocX();
-              locY = dialog.getLocY();
-              dialog.quit();
+            locationDialog = new LocationDialog(e -> {
+              locX = locationDialog.getLocX();
+              locY = locationDialog.getLocY();
+              locationDialog.quit();
               loginPage.setSelectedLocation(locX, locY);
             });
-            dialog.start();
+            locationDialog.start();
           }
         }
       );
       loginPage.start();
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       System.out.println("Ocorreu um erro inesperado na ligação com o servidor de frontend");
-    }
-    finally {
+    } finally {
       //frontend.close();
     }
   }
@@ -108,10 +107,10 @@ public class Controller {
       new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
-          dialog = new LocationDialog(e -> {
-            locX = dialog.getLocX();
-            locY = dialog.getLocY();
-            dialog.quit();
+          locationDialog = new LocationDialog(e -> {
+            locX = locationDialog.getLocX();
+            locY = locationDialog.getLocY();
+            locationDialog.quit();
             try {
               mainPage.setPopulation(frontend.usersInLocation(locX, locY));
               mainPage.setLocationCoordinates(locX, locY);
@@ -119,17 +118,17 @@ public class Controller {
               mainPage.setSelectLocationError("ERRO: a população não foi atualizada");
             }
           });
-          dialog.start();
+          locationDialog.start();
         }
       },
       // Update location
       new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent actionEvent) {
-          dialog = new LocationDialog(e -> {
-            locX = dialog.getLocX();
-            locY = dialog.getLocY();
-            dialog.quit();
+          locationDialog = new LocationDialog(e -> {
+            locX = locationDialog.getLocX();
+            locY = locationDialog.getLocY();
+            locationDialog.quit();
             try {
               frontend.updateLocation(locX, locY);
               mainPage.setUpdatedLocation(locX, locY);
@@ -137,13 +136,38 @@ public class Controller {
               mainPage.setUpdatedLocation("ERRO: localização não foi atualizada");
             }
           });
-          dialog.start();
+          locationDialog.start();
+        }
+      },
+      // Add stats
+      new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+          statisticsDialog = new StatisticsDialog();
+          statisticsDialog.start();
+        }
+      },
+      // Add infected
+      new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+          try {
+            frontend.addInfectedUser();
+            mainPage.setInfectedResult("Sucesso! A bloquear...");
+            System.exit(0);
+          } catch (IOException | NoUserException e) {
+            mainPage.setInfectedResult("ERRO: não enviado");
+          }
         }
       }
     );
     mainPage.setName(this.username);
     mainPage.setDistrict(this.district);
     mainPage.start();
+  }
+
+  private void updateStatistics(){
+//    statisticsDialog.addNUserDistrictSelectorListener();
   }
 
   public void newWarning(String warning) {

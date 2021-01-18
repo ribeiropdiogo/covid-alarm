@@ -25,11 +25,15 @@ public class MainPage {
   private JLabel locationLabel;
   private JLabel updatedLocationLabel;
   private JLabel selectLocationError;
+  private JLabel infectedResult;
+  private JButton statsButton;
   private JTable locationTable;
 
-  public MainPage(ActionListener selectLocation, ActionListener updateLocation) {
+  public MainPage(ActionListener selectLocation, ActionListener updateLocation, ActionListener stats, ActionListener addInfected) {
     selectLocationButton.addActionListener(selectLocation);
     updateLocationButton.addActionListener(updateLocation);
+    statsButton.addActionListener(stats);
+    infectedButton.addActionListener(addInfected);
   }
 
   public void start() {
@@ -134,6 +138,11 @@ public class MainPage {
 
   public void setUpdatedLocation(String error) {
     this.updatedLocationLabel.setText(error);
+  }
+
+
+  public void setInfectedResult(String msg) {
+    this.infectedResult.setText(msg);
   }
 
 
@@ -300,6 +309,19 @@ public class MainPage {
     gbc.gridy = 4;
     gbc.fill = GridBagConstraints.HORIZONTAL;
     dataPanel.add(spacer7, gbc);
+    infectedResult = new JLabel();
+    infectedResult.setText("");
+    gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 14;
+    gbc.gridwidth = 6;
+    dataPanel.add(infectedResult, gbc);
+    final JPanel spacer8 = new JPanel();
+    gbc = new GridBagConstraints();
+    gbc.gridx = 1;
+    gbc.gridy = 4;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    dataPanel.add(spacer8, gbc);
   }
 
   /**
