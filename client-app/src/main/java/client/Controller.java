@@ -4,26 +4,26 @@ import client.exceptions.*;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 
 public class Controller {
 
+  private static final String QUIT = "/quit";
+  private static FrontendServer frontend;
+  private static PrivNotificationsThread notifications;
   private Login loginPage;
   private MainPage mainPage;
-  private static FrontendServer frontend;
-  private static NotificationsThread notifications;
+  private LocationDialog dialog;
   private String username;
   private int userID;
   private int district;
-
-  private static final String QUIT = "/quit";
+  private int locX, locY;
 
   public void start() {
+    locX = locY = -1;
     try {
       frontend = new FrontendServer();
-      notifications = new NotificationsThread(this);
+      notifications = new PrivNotificationsThread(this);
       this.loginPage = new Login(
         new ActionListener() {
           @Override
@@ -36,16 +36,32 @@ public class Controller {
           public void actionPerformed(ActionEvent actionEvent) {
             register();
           }
+        },
+        new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent actionEvent) {
+            // Open select location dialog window
+            dialog = new LocationDialog(e -> {
+              locX = dialog.getLocX();
+              locY = dialog.getLocY();
+              dialog.quit();
+              loginPage.setSelectedLocation(locX, locY);
+            });
+            dialog.start();
+          }
         }
       );
       loginPage.start();
-    } finally {
+    }
+    catch (IOException e) {
+      System.out.println("Ocorreu um erro inesperado na ligação com o servidor de frontend");
+    }
+    finally {
       frontend.close();
-      notifications.close();
     }
   }
 
-  private void login(){
+  private void login() {
     String username = loginPage.getLoginName();
     String password = new String(loginPage.getLoginPassword());
     try {
@@ -54,11 +70,10 @@ public class Controller {
       this.userID = Integer.parseInt(res[1]);
       this.username = username;
       notifications.subscribe(district, userID);
-      // TODO - ver isto aqui do unsubscribe
       mainPageStart();
       notifications.unsubscribe(district, userID);
-    } catch (AlreadyLoggedInException | InvalidParametersException e) {
-      System.out.println(e.getMessage());
+    } catch (AlreadyLoggedInException | InvalidParametersException | IOException | NullPointerException e) {
+      loginPage.setLoginError("Inválido");
     }
   }
 
@@ -67,47 +82,73 @@ public class Controller {
     String password1 = new String(loginPage.getRegisterPassword1());
     String password2 = new String(loginPage.getRegisterPassword2());
     int district;
-    int locX, locY;
 
     try {
-      if(!password1.equals(password2)) throw new DifferentPasswordsException();
+      if (username.equals("")) throw new InvalidParametersException();
+      if (!password1.equals(password2)) throw new DifferentPasswordsException();
       district = loginPage.getDistrict();
+      if (locX == -1 || locY == -1) throw new InvalidParametersException();
       String[] res = frontend.createAccount(username, password1, district, locX, locY).split(" ");
       this.userID = Integer.parseInt(res[1]);
       this.district = district;
       this.username = username;
       notifications.subscribe(district, userID);
-//      // TODO - ver isto aqui do unsubscribe
       mainPageStart();
-//      notifications.unsubscribe(district, userID);
-    } catch (UserExistsException | DifferentPasswordsException | InvalidDistrictException e) {
+      notifications.unsubscribe(district, userID);
+    } catch (UserExistsException | DifferentPasswordsException | InvalidDistrictException | InvalidParametersException | IOException e) {
       loginPage.setRegisterError(e.getMessage());
     }
-
   }
 
-  private void mainPageStart(){
-    loginPage.quit();
-    this.mainPage = new MainPage();
 
+  private void mainPageStart() {
+    loginPage.quit();
+    this.mainPage = new MainPage(
+      // Select location
+      new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+          dialog = new LocationDialog(e -> {
+            locX = dialog.getLocX();
+            locY = dialog.getLocY();
+            dialog.quit();
+            try {
+              mainPage.setPopulation(frontend.usersInLocation(locX, locY));
+              mainPage.setLocationCoordinates(locX, locY);
+            } catch (IOException ioException) {
+              mainPage.setSelectLocationError("ERRO: a população não foi atualizada");
+            }
+          });
+          dialog.start();
+        }
+      },
+      // Update location
+      new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent actionEvent) {
+          dialog = new LocationDialog(e -> {
+            locX = dialog.getLocX();
+            locY = dialog.getLocY();
+            dialog.quit();
+            try {
+              frontend.updateLocation(locX, locY);
+              mainPage.setUpdatedLocation(locX, locY);
+            } catch (IOException | NoUserException exception) {
+              mainPage.setUpdatedLocation("ERRO: localização não foi atualizada");
+            }
+          });
+          dialog.start();
+        }
+      }
+    );
     mainPage.setName(this.username);
     mainPage.setDistrict(this.district);
-    mainPage.setUsersInLocation(frontend.usersInLocation()); // TODO - enganei-me aqui. o utilizador pode escolher a localização, não é necessariamente aquela onde ele está
-
     mainPage.start();
   }
 
-  public void newWarning(String warning){
+  public void newWarning(String warning) {
     mainPage.setWarning(warning);
   }
 
-
-  private void printLoginData(){
-    System.out.println("Login:  "+loginPage.getLoginName()+"   "+new String(loginPage.getLoginPassword()));
-  }
-
-  private void printRegisterData(){
-    System.out.println("Register:  "+loginPage.getRegisterName()+"   "+new String(loginPage.getRegisterPassword1())+"   "+new String(loginPage.getRegisterPassword2())+"   "+loginPage.getDistrict());
-  }
 
 }

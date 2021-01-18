@@ -9,11 +9,13 @@ import org.zeromq.ZMQException;
 public class PrivNotificationsThread extends Thread {
 
     private final ZMQ.Socket socket;
+    private Controller controller;
 
 
-    public PrivNotificationsThread() {
+    public PrivNotificationsThread(Controller controller) {
         socket = new ZContext().createSocket(SocketType.SUB);
         socket.connect("tcp://localhost:8002");
+        this.controller = controller;
     }
 
     public void subscribe(int distNum, int userID) {
@@ -30,7 +32,7 @@ public class PrivNotificationsThread extends Thread {
             while (true) {
                 try {
                     String msg = socket.recvStr().split(" ", 3)[2];
-                    System.out.println("[!] " + msg);
+                    controller.newWarning("[!] " + msg);
                 } catch (ZMQException e) {
                     break;
                 }

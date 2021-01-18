@@ -26,11 +26,14 @@ public class Login {
   private JPanel registerPanel;
   private JLabel errorLoginLabel;
   private JLabel errorRegisterLabel;
+  private JButton selectLocationButton;
+  private JLabel selectedLocationLabel;
 
 
-  public Login(ActionListener login, ActionListener register) {
+  public Login(ActionListener login, ActionListener register, ActionListener location) {
     this.loginButton.addActionListener(login);
     this.registerButton.addActionListener(register);
+    this.selectLocationButton.addActionListener(location);
   }
 
   public String getRegisterName() {
@@ -46,7 +49,7 @@ public class Login {
   }
 
   public int getDistrict() throws InvalidDistrictException {
-    switch (districtField.getSelectedItem().toString()){
+    switch (districtField.getSelectedItem().toString()) {
       case "Aveiro":
         return 1;
       case "Beja":
@@ -117,6 +120,9 @@ public class Login {
     errorRegisterLabel.setText("");
   }
 
+  public void setSelectedLocation(int x, int y) {
+    selectedLocationLabel.setText("Selecionada localização (" + x + "," + y + ")");
+  }
 
   public void addLoginActionListener(ActionListener listener) {
     loginButton.addActionListener(listener);
@@ -319,7 +325,7 @@ public class Login {
     final JPanel spacer9 = new JPanel();
     gbc = new GridBagConstraints();
     gbc.gridx = 0;
-    gbc.gridy = 13;
+    gbc.gridy = 17;
     gbc.fill = GridBagConstraints.VERTICAL;
     gbc.ipady = 10;
     registerPanel.add(spacer9, gbc);
@@ -327,7 +333,7 @@ public class Login {
     registerButton.setText("Registar");
     gbc = new GridBagConstraints();
     gbc.gridx = 0;
-    gbc.gridy = 14;
+    gbc.gridy = 18;
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.ipady = 10;
     registerPanel.add(registerButton, gbc);
@@ -402,7 +408,7 @@ public class Login {
     gbc = new GridBagConstraints();
     gbc.gridx = 2;
     gbc.gridy = 0;
-    gbc.gridheight = 15;
+    gbc.gridheight = 19;
     gbc.fill = GridBagConstraints.BOTH;
     registerPanel.add(separator1, gbc);
     final JLabel label6 = new JLabel();
@@ -415,20 +421,49 @@ public class Login {
     errorRegisterLabel.setText("");
     gbc = new GridBagConstraints();
     gbc.gridx = 0;
-    gbc.gridy = 16;
+    gbc.gridy = 20;
     registerPanel.add(errorRegisterLabel, gbc);
     final JPanel spacer12 = new JPanel();
     gbc = new GridBagConstraints();
     gbc.gridx = 0;
-    gbc.gridy = 15;
+    gbc.gridy = 19;
     gbc.fill = GridBagConstraints.VERTICAL;
     registerPanel.add(spacer12, gbc);
+    final JLabel label7 = new JLabel();
+    label7.setText("Localização");
+    gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 14;
+    gbc.anchor = GridBagConstraints.WEST;
+    registerPanel.add(label7, gbc);
+    final JPanel spacer13 = new JPanel();
+    gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 13;
+    gbc.fill = GridBagConstraints.VERTICAL;
+    registerPanel.add(spacer13, gbc);
+    selectLocationButton = new JButton();
+    selectLocationButton.setText("Selecionar");
+    gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 15;
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.fill = GridBagConstraints.HORIZONTAL;
+    gbc.ipady = 10;
+    registerPanel.add(selectLocationButton, gbc);
+    selectedLocationLabel = new JLabel();
+    selectedLocationLabel.setText("");
+    gbc = new GridBagConstraints();
+    gbc.gridx = 0;
+    gbc.gridy = 16;
+    registerPanel.add(selectedLocationLabel, gbc);
     nameLabel.setLabelFor(loginNameField);
     passwordLabel.setLabelFor(loginPasswordField);
     label2.setLabelFor(loginNameField);
     label3.setLabelFor(loginPasswordField);
     label4.setLabelFor(loginPasswordField);
     label5.setLabelFor(loginPasswordField);
+    label7.setLabelFor(loginPasswordField);
   }
 
   /**
