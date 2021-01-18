@@ -40,13 +40,13 @@ public class DefaultResource implements ResourceInterface {
     */
     @GET
     @Timed
-    @Path("district/getTotalUsers")
+    @Path("/district/getTotalUsers")
     @Override
     public Response getUsersPerDistrict(@QueryParam("district") String districtName){
         Integer result = 0;
         try {
             result = Data.getUsersPerDistrict(districtName);
-            if (result != 0 ){
+            if (result >= 0 ){
                 return Response.ok(result).build();
             }
         }catch (Exception e){
@@ -60,13 +60,13 @@ public class DefaultResource implements ResourceInterface {
     */
     @GET
     @Timed
-    @Path("district/getTotalInfected")
+    @Path("/district/getTotalInfected")
     @Override
     public Response getTotalInfectedPerDistrict(@QueryParam("district") String districtName){
         Integer result = 0;
         try {
             result = Data.getInfectedPerDistrict(districtName);
-            if (result != 0 ){
+            if (result >= 0 ){
                 return Response.ok(result).build();
             }
         }catch (Exception e){
@@ -126,7 +126,7 @@ public class DefaultResource implements ResourceInterface {
         float result = 0;
         try {
             result = Data.meanMeetInfected();
-            if (result != 0 ){
+            if (result >= 0 ){
                 return Response.ok(result).build();
             }
         }catch (Exception e){
@@ -196,7 +196,7 @@ public class DefaultResource implements ResourceInterface {
                 if(name == null)
                     return Response.status(400).entity("Please provide the District name !!").build();
 
-                System.out.println("Olá fiz um post de: " + district);
+                System.out.println("POST: " + district);
 
                 District d = Data.addDistrict(district);
 

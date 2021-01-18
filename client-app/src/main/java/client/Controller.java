@@ -57,7 +57,7 @@ public class Controller {
       System.out.println("Ocorreu um erro inesperado na ligação com o servidor de frontend");
     }
     finally {
-      frontend.close();
+      //frontend.close();
     }
   }
 
