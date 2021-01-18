@@ -114,10 +114,10 @@ authenticator(CliSock, Districts) ->
 user({Name, ID} = User, CliSock, DistSock, Districts) ->
     receive
         {tcp, _, "lo\n"} ->
-            io:format("[~s :: ~s] Logged out~n", [Name, ID]),
             login_manager:logout(Name),
             inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, "ok\n"),
+            io:format("[~s :: ~s] Logged out~n", [Name, ID]),
             authenticator(CliSock, Districts);
         {tcp, _, "ul " ++ Args} ->
             chumak:send(DistSock, "ul " ++ ID ++ " " ++ string:trim(Args)),
@@ -134,17 +134,19 @@ user({Name, ID} = User, CliSock, DistSock, Districts) ->
         {tcp, _, "ai\n"} ->
             chumak:send(DistSock, "ai " ++ ID),
             {ok, Response} = chumak:recv(DistSock),
+            login_manager:infected(Name),
             inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, binary_to_list(Response) ++ "\n"),
-            user(User, CliSock, DistSock, Districts);
+            io:format("[~s :: ~s] Infected, Logged out~n", [Name, ID]),
+            authenticator(CliSock, Districts);
         {tcp, _, _} ->
             inet:setopts(CliSock, [{active, once}]),
             gen_tcp:send(CliSock, "error invalid_request\n"),
             user(User, CliSock, DistSock, Districts);
         {tcp_closed, _} ->
-            io:format("[~s :: ~s] Disconnected~n", [Name, ID]),
-            login_manager:logout(Name);
+            login_manager:logout(Name),
+            io:format("[~s :: ~s] Disconnected~n", [Name, ID]);
         {tcp_error, _, Reason} ->
-            io:format("[~s :: ~s] TCP error: ~p~n", [Name, ID, Reason]),
-            login_manager:logout(Name)
+            login_manager:logout(Name),
+            io:format("[~s :: ~s] TCP error: ~p~n", [Name, ID, Reason])
     end.
