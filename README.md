@@ -1,5 +1,7 @@
 # GoAwayBigCovid
 
+Este projeto consiste num Alarme Covid no âmbito da Unidade Curricular de Paraigmas de Sistemas Distribuídos. Este sistema permite a existência de utilizadores que interagem com o sistema para criar contas, efetuar login, consultar estatísticas de cada distrito, atualizarem a sua posição, ou comunicarem ao sistema que estão infetados. O sistema em si possui um mecanismo de notificações público e privado que notifica os utilizadores.
+
 ## Servidor Front-end
 
 ### Pedidos
